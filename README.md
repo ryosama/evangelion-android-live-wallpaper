@@ -19,9 +19,12 @@ source scripts/env.sh
 
 Java Temurin 21, Gradle 8.11.1 (wrapper avec SHA-256), Android Gradle Plugin
 8.9.2, SDK de compilation 35 et Build Tools 35.0.0. Application compatible
-Android 8.0 et versions ultérieures, y compris Android 12. Java natif et Canvas,
+Android 8.0 et versions ultérieures, y compris Android 12. Kotlin 2.2.21 et Canvas,
 sans bibliothèque graphique ni service externe. Gradle est limité à un worker
-et 1 Go de mémoire pour limiter les ressources utilisées.
+et 1 Go de mémoire pour limiter les ressources utilisées. Le compilateur Kotlin fonctionne dans
+le processus Gradle pour éviter un second processus résident. Le JDK reste
+nécessaire aux outils de compilation ; les sources de l’application sont
+exclusivement en Kotlin, dans `app/src/main/kotlin/`.
 
 Le SDK de compilation 35 n’impose pas Android 15 au téléphone : `minSdk 26`
 définit la version Android minimale.
@@ -45,6 +48,14 @@ Le script compile, installe l’APK puis ouvre l’application. Toucher
 « Prévisualiser le fond animé », puis utiliser la confirmation Android pour
 l’appliquer. Le script cible un téléphone USB ; passer son numéro de série
 comme argument si plusieurs appareils sont branchés.
+
+Pour installer un APK déjà compilé, sans relancer la compilation :
+
+```bash
+source scripts/env.sh
+adb -d install -r app/build/outputs/apk/debug/app-debug.apk
+adb -d shell am start -n org.evawallpaper/.MainActivity
+```
 
 L’APK est dans `app/build/outputs/apk/debug/app-debug.apk`. Il est signé avec
 la clé de développement automatiquement créée par les outils Android.
@@ -93,6 +104,7 @@ adb logcat -s AndroidRuntime
 - [Prérequis Android Studio](https://developer.android.com/studio/install)
 - [Accélération de l’émulateur](https://developer.android.com/studio/run/emulator-acceleration)
 - [Déploiement USB](https://developer.android.com/studio/run/device?hl=fr)
+- [Configuration Kotlin et compatibilité Gradle](https://kotlinlang.org/docs/gradle-configure-project.html)
 - [Compatibilité AGP 8.9](https://developer.android.com/build/releases/agp-8-9-0-release-notes)
 
 ## Validation
