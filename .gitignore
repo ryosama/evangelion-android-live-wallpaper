@@ -7,3 +7,22 @@ local.properties
 *.keystore
 .idea/
 *.iml
+
+# Identités locales, secrets et artefacts privés
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.apk
+*.aab
+*.log
+*.hprof
+key.properties
+keystore.properties
+credentials.json
+service-account*.json
+.agents/
+.codex/
+.aws/

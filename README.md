@@ -234,3 +234,11 @@ La batterie pleine reste animée tant que le chargeur est branché ; un état An
 
 Compiler l’APK, exécuter les tests et l’analyse Android avant installation.
 Vérifier le rendu et le cycle de vie du fond sur un appareil compatible.
+
+## Publication du dépôt
+
+Ne publier que les fichiers suivis par Git. Les outils locaux, caches, journaux,
+APK, clés de signature et paramètres privés sont exclus par `.gitignore`.
+L’identifiant Android du projet est `org.evawallpaper`. Un changement d’identifiant
+crée une application distincte : les réglages d’une ancienne installation ne
+sont pas transférés automatiquement.
