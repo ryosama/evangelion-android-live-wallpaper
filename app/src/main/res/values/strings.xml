@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Evangelion Live Wallpaper</string>
+    <string name="wallpaper_description">Fond animé de démonstration — prototype technique</string>
+    <string name="preview">Prévisualiser le fond animé</string>
+</resources>
