@@ -1,0 +1,9 @@
+<resources>
+    <style name="AppTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="colorPrimary">#A4E748</item>
+        <item name="colorPrimaryVariant">#628D24</item>
+        <item name="colorOnPrimary">#101410</item>
+        <item name="colorSecondary">#A4E748</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

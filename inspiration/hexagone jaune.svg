@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg118"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs115">
+    <rect
+       x="148.28633"
+       y="386.12378"
+       width="581.82433"
+       height="541.44604"
+       id="rect3497" />
+    <rect
+       x="268.26407"
+       y="587.2312"
+       width="298.42186"
+       height="64.109839"
+       id="rect2603" />
+    <rect
+       x="277.92118"
+       y="623.5225"
+       width="290.01339"
+       height="66.407581"
+       id="rect2547" />
+  </defs>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="star"
+       style="fill:#d4aa00;stroke-width:0.865;stroke:#000000;stroke-opacity:1;stroke-dasharray:none;fill-opacity:1"
+       id="path176"
+       inkscape:flatsided="true"
+       sodipodi:sides="6"
+       sodipodi:cx="61.915939"
+       sodipodi:cy="107.1028"
+       sodipodi:r1="61.510185"
+       sodipodi:r2="53.269386"
+       sodipodi:arg1="1.0471976"
+       sodipodi:arg2="1.5707963"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 92.671029,160.37218 -61.510185,0 L 0.40575409,107.1028 31.160849,53.833414 l 61.510186,3e-6 30.755085,53.269383 z"
+       inkscape:transform-center-y="6.7268453e-06"
+       transform="rotate(180,86.714109,139.95223)"
+       inkscape:transform-center-x="-2.3378906e-06" />
+    <path
+       sodipodi:type="star"
+       style="fill:none;stroke:#000000;stroke-width:1.565;stroke-dasharray:none;stroke-opacity:1"
+       id="path338"
+       inkscape:flatsided="true"
+       sodipodi:sides="6"
+       sodipodi:cx="76.180885"
+       sodipodi:cy="99.264793"
+       sodipodi:r1="57.893688"
+       sodipodi:r2="50.137405"
+       sodipodi:arg1="0"
+       sodipodi:arg2="0.52359878"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 134.07457,99.264793 -28.94684,50.137407 -57.893689,0 -28.946844,-50.137407 28.946844,-50.137404 57.893689,0 z"
+       transform="matrix(-0.93521615,0,0,-0.93521615,182.75787,265.6357)" />
+    <path
+       sodipodi:type="star"
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.565;stroke-dasharray:none;stroke-opacity:1"
+       id="path1743"
+       inkscape:flatsided="true"
+       sodipodi:sides="3"
+       sodipodi:cx="77.434898"
+       sodipodi:cy="44.997086"
+       sodipodi:r1="10.125788"
+       sodipodi:r2="5.0628939"
+       sodipodi:arg1="0.52359878"
+       sodipodi:arg2="1.5707963"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 86.204088,50.059979 -17.538379,0 8.769189,-15.188681 z"
+       inkscape:transform-center-y="-2.5314475"
+       transform="translate(34.07738,96.065196)" />
+    <path
+       sodipodi:type="star"
+       style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.565;stroke-dasharray:none;stroke-opacity:1"
+       id="path1743-3"
+       inkscape:flatsided="true"
+       sodipodi:sides="3"
+       sodipodi:cx="77.434898"
+       sodipodi:cy="44.997086"
+       sodipodi:r1="10.125788"
+       sodipodi:r2="5.0628939"
+       sodipodi:arg1="0.52359878"
+       sodipodi:arg2="1.5707963"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 86.204088,50.059979 -17.538379,0 8.769189,-15.188681 z"
+       inkscape:transform-center-y="2.5314352"
+       transform="rotate(180,94.473589,123.70984)"
+       inkscape:transform-center-x="-2.3026629e-06" />
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text3495"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:48px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;white-space:pre;shape-inside:url(#rect3497);display:inline;fill:#d45500;fill-opacity:1;stroke:#000000;stroke-width:3.26929;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+</svg>

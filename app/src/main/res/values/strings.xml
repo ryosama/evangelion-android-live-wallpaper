@@ -1,5 +1,21 @@
 <resources>
     <string name="app_name">Evangelion Live Wallpaper</string>
-    <string name="wallpaper_description">Fond animé de démonstration — prototype technique</string>
-    <string name="preview">Prévisualiser le fond animé</string>
+    <string name="wallpaper_description">Mosaïque hexagonale selon le niveau de batterie</string>
+    <string name="preview">Prévisualiser / choisir ce fond</string>
+    <string name="color_button">Couleur %1$s</string>
+    <string name="battery_ranges">Critique : 0 à moins de %1$d %%\nMauvais : %1$d à moins de %2$d %%\nOK : %2$d à moins de %3$d %%\nParfait : %3$d à 100 %%</string>
+    <string name="density_title">Densité des tuiles</string>
+    <string name="density_description">La proportion diminue avec la batterie. Le minimum reste prioritaire, dans la limite des emplacements disponibles. Zéro désactive ce minimum. Enregistrer avec Appliquer.</string>
+    <string name="minimum_tiles_value">Minimum : %1$d tuiles allumées</string>
+    <string name="minimum_tiles_accessibility">Nombre minimum de tuiles allumées, de 0 à 100</string>
+    <string name="tile_count_value">%1$d tuiles</string>
+    <string name="tile_ratio_value">À 100 %% de batterie : 1 tuile sur %1$d</string>
+    <string name="tile_ratio_accessibility">Proportion à batterie pleine, une tuile sur 1 à 20</string>
+    <string name="one_in_value">1 sur %1$d</string>
+    <string name="effects_title">Effets des tuiles</string>
+    <string name="appearance_effect">Apparition</string>
+    <string name="disappearance_effect">Disparition</string>
+    <string name="flicker_effect">Clignotement fluorescent</string>
+    <string name="fade_in">Fondu entrant (fade in)</string>
+    <string name="fade_out">Fondu sortant (fade out)</string>
 </resources>

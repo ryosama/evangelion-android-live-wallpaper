@@ -20,7 +20,7 @@ source scripts/env.sh
 Java Temurin 21, Gradle 8.11.1 (wrapper avec SHA-256), Android Gradle Plugin
 8.9.2, SDK de compilation 35 et Build Tools 35.0.0. Application compatible
 Android 8.0 et versions ultérieures, y compris Android 12. Kotlin 2.2.21 et Canvas,
-sans bibliothèque graphique ni service externe. Gradle est limité à un worker
+Interface Material Components ; aucun service externe. Gradle est limité à un worker
 et 1 Go de mémoire pour limiter les ressources utilisées. Le compilateur Kotlin fonctionne dans
 le processus Gradle pour éviter un second processus résident. Le JDK reste
 nécessaire aux outils de compilation ; les sources de l’application sont
@@ -85,20 +85,128 @@ Le script crée à la demande un appareil Android 12 (API 31). L’image systèm
 n’est pas téléchargée sur une machine sans accélération, pour économiser
 plusieurs Go. Ne pas considérer l’émulateur comme validé tant qu’il n’a pas démarré.
 
-## Prototype
+## Configuration
 
-Le lanceur ouvre la prévisualisation d’un `WallpaperService`. Le fond de test
-contient un disque violet et une ligne verte animés à environ 20 images/s.
-L’animation s’arrête quand le fond n’est pas visible ou que sa surface est détruite.
-Ce n’est pas encore le visuel Evangelion définitif. Aucune permission Internet.
+L’icône de l’application ouvre les réglages. Ils sont aussi accessibles depuis
+les réglages du fond d’écran, lorsque le sélecteur Android expose cette action.
+
+- Aperçu des quatre tuiles : **Parfait**, **OK**, **Mauvais**, **Critique**.
+- Une barre Material RangeSlider à quatre segments colorés, de 0 à 100 %, avec **trois curseurs** :
+  entrée dans Mauvais, OK puis Parfait. Valeurs initiales : 15, 30 et 50 %.
+  Pas de 1 %, curseurs non croisables, séparation minimale de 1 point.
+  Le seuil appartient toujours à l’état supérieur. Les quatre plages restent
+  valides, même avec des seuils à 98, 99 et 100 %.
+- **Densité des tuiles (0.6.0)** : deux curseurs règlent le minimum de tuiles
+  allumées (0 à 100, défaut 10) et la proportion à batterie pleine (une tuile sur
+  1 à 20, défaut 4). Zéro désactive le minimum. La capacité de la grille reste
+  la limite supérieure. Le bouton Appliquer enregistre ces valeurs et ajuste
+  progressivement la population, avec l’animation existante.
+- **Effets des tuiles (0.7.0)** : apparition au choix entre clignotement et fondu
+  entrant (fade in), disparition au choix entre clignotement et fondu sortant
+  (fade out). Les deux choix sont indépendants et enregistrés avec Appliquer.
+  Le clignotement reste le défaut dans les deux directions, y compris après mise
+  à jour d’une ancienne configuration. Un relais déjà commencé conserve ses effets ;
+  le nouveau choix est utilisé au suivant.
+- Chaque état possède une couleur (sélecteur RGB ou code hexadécimal) et un
+  texte optionnel de 24 caractères maximum. Le texte est ajusté à la tuile.
+  Le bouton de couleur reflète la couleur sélectionnée dès sa validation, avec
+  un texte noir ou blanc et une bordure contrastée pour rester lisible.
+- **Appliquer** enregistre les réglages et actualise le fond installé.
+- **Prévisualiser / choisir ce fond** enregistre et ouvre le sélecteur Android.
+- **Restaurer les valeurs par défaut** restaure le brouillon ; toucher Appliquer
+  pour enregistrer cette restauration.
+
+Les modifications non appliquées survivent à une rotation de l’écran. Les réglages
+appliqués sont conservés localement et restaurés au redémarrage. Les anciennes
+configurations sans réglages de densité conservent leurs couleurs, textes et seuils,
+avec le minimum 10 et la proportion 4. La restauration des valeurs par défaut
+réinitialise également ces deux nouveaux curseurs. Les quatre PNG
+originaux sont utilisés pour les valeurs par défaut ; les tuiles personnalisées
+reprennent leur motif sans texte, recoloré, puis leur propre texte est dessiné.
+L’espacement reste de 3 pixels. Les noms des états sont des libellés de configuration,
+ils ne remplacent pas les textes WARNING/EMERGENCY présents par défaut sur les tuiles.
+
+La validation sur téléphone doit couvrir les trois curseurs (y compris leurs
+limites), Appliquer, les couleurs/textes, la rotation et le retour au fond d’écran.
+
+## Mosaïque de batterie
+
+Les hexagones fournis dans `inspiration/` occupent une grille en nid
+d’abeilles (colonnes décalées), sur fond noir. Largeur actuelle : 96 dp. L’espace noir entre
+les faces colorées est de **3 pixels physiques**, quelle que soit la densité.
+Le calcul tient compte du contour noir des SVG. Les centres retenus sont dans la surface visible ; certaines tuiles sont
+partiellement coupées aux bords. Textes WARNING et EMERGENCY conservés.
+
+| Batterie | Tuile |
+| --- | --- |
+| 50 à 100 % | Verte |
+| 30 à moins de 50 % | Jaune |
+| 15 à moins de 30 % | Orange, WARNING |
+| 0 à moins de 15 % | Rouge, EMERGENCY |
+
+Les mises à jour de batterie sont écoutées seulement quand le fond est visible.
+Une nouvelle tranche actualise le motif, et chaque changement de niveau recalcule
+le nombre de tuiles, même dans la même tranche. Le niveau courant est relu au
+retour à l’écran. Une lecture invalide conserve le dernier état connu (fond noir
+avant la première lecture valide).
+
+### Densité et animation fluorescente (0.5.0)
+
+Pour `N` emplacements visibles, le nombre cible est :
+
+```text
+min(N, max(minimum, arrondi(N × pourcentage_batterie / (100 × proportion))))
+```
+
+Avec les valeurs par défaut (minimum 10, proportion 4), à 100 %, environ une
+tuile sur quatre est allumée ; à 50 %, une sur huit ;
+à 25 %, une sur seize. Le minimum de dix prévaut lorsque le calcul donne moins.
+Par exemple, sur une grille de 60 emplacements : 15 tuiles à 100 %, puis au
+moins 10 à 50 %. Une surface possédant moins de dix emplacements les utilise tous.
+
+Les positions initiales sont tirées au hasard. Après une pause aléatoire de
+1,8 à 4,2 secondes, une tuile quitte sa position pour un emplacement libre.
+Le relais dure entre 0,85 et 1,35 seconde. Le clignotement utilise des impulsions
+et coupures irrégulières rappelant un starter fluorescent. Le fondu utilise une
+progression douce, continue et monotone de l’opacité. Chaque direction suit son
+effet choisi ; lorsque les deux effets sont identiques, les opacités de l’ancienne
+et de la nouvelle position sont complémentaires. La première s’éteint pendant que
+la seconde s’allume. Pendant ce relais, une position supplémentaire peut être
+partiellement allumée ; le nombre reste au moins égal à la cible en régime stable. Les diminutions et
+augmentations de densité se font également par clignotement, une tuile à la fois.
+
+Le moteur dessine à 25 images/s pendant les transitions uniquement. Entre deux
+relais, il attend la prochaine échéance sans boucle de rendu. L’animation et les
+callbacks sont suspendus dès que le fond est caché ou sa surface détruite, puis
+reprennent sans rattrapage des animations manquées. Couleurs, textes et seuils
+personnalisés restent conservés.
+
+Les PNG transparents de 512 pixels sont exportés fidèlement des SVG, recadrés
+sur le dessin, et stockés dans `drawable-nodpi`. Pour les régénérer avec Inkscape :
+
+```bash
+./scripts/export-tiles.sh
+```
+
+Compilation et vérifications :
 
 ```bash
 source scripts/env.sh
-./gradlew :app:lintDebug
-adb logcat -s AndroidRuntime
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 ```
 
+Les tests couvrent les frontières 50/49,9, 30/29,9, 15/14,9 %, les lectures
+invalides et l’espacement dans les trois directions du pavage à plusieurs densités.
+Les tests vérifient aussi la densité, le minimum pendant les clignotements, les
+changements de niveau, les destinations distinctes et la pause/reprise.
+Les tests couvrent aussi les quatre combinaisons d’effets, les bornes et la
+progression du fondu, et le changement de choix pendant un relais. La couleur
+des boutons et les nouveaux choix d’effets de la 0.7.0 restent à vérifier sur
+le téléphone.
+
 ## Références officielles
+
+- [RangeSlider à plusieurs curseurs](https://developer.android.com/reference/com/google/android/material/slider/RangeSlider)
 
 - [Outils Android](https://developer.android.com/studio#command-tools)
 - [Prérequis Android Studio](https://developer.android.com/studio/install)
