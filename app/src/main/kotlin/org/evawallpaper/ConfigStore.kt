@@ -23,8 +23,12 @@ class ConfigStore(context: Context) {
             put("bad", config.thresholds.bad)
             put("ok", config.thresholds.ok)
             put("perfect", config.thresholds.perfect)
-            put("minimumTiles", config.density.minimumTiles)
-            put("tileDivisor", config.density.tileDivisor)
+            put("minimumTiles", config.minimumTiles)
+            put("chargeFillSeconds", config.charging.fillSeconds)
+            put("chargeHoldSeconds", config.charging.holdSeconds)
+            put("chargeColor", config.charging.color)
+            put("chargePulseMillis", config.charging.pulseMillis)
+            put("chargeMinimumOpacity", config.charging.minimumOpacity)
             put("appearanceEffect", config.effects.appearance.name)
             put("disappearanceEffect", config.effects.disappearance.name)
             put("styles", JSONArray().apply {
@@ -44,14 +48,17 @@ class ConfigStore(context: Context) {
                     val item = styles.getJSONObject(index)
                     TileStyle(item.getInt("color") or 0xFF000000.toInt(), item.getString("text"))
                 },
-                // Les anciens réglages gardent leurs couleurs/textes et reçoivent 10 / 4.
-                TileDensity(
-                    root.optInt("minimumTiles", 10).coerceIn(0, 100),
-                    root.optInt("tileDivisor", 4).coerceIn(1, 20),
-                ),
+                root.optInt("minimumTiles", 7).coerceIn(0, 100),
                 TileEffects(
                     TileEffect.fromStored(root.optString("appearanceEffect", "FLICKER")),
                     TileEffect.fromStored(root.optString("disappearanceEffect", "FLICKER")),
+                ),
+                ChargingAnimation(
+                    root.optInt("chargeFillSeconds", 4).coerceIn(1, 30),
+                    root.optInt("chargeHoldSeconds", 5).coerceIn(0, 60),
+                    root.optInt("chargeColor", 0xFF0088FF.toInt()) or 0xFF000000.toInt(),
+                    (root.optInt("chargePulseMillis", 1000).coerceIn(200, 5000) / 100) * 100,
+                    root.optInt("chargeMinimumOpacity", 40).coerceIn(0, 100),
                 ),
             )
         }

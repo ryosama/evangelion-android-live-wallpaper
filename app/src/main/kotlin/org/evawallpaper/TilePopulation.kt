@@ -21,10 +21,10 @@ class TilePopulation(
     companion object {
         const val FRAME_MS = 40L
 
-        fun countForBattery(capacity: Int, level: Int, scale: Int, density: TileDensity = TileDensity()): Int {
+        fun countForBattery(capacity: Int, level: Int, scale: Int, minimumTiles: Int = 7): Int {
             require(capacity >= 0 && scale > 0 && level in 0..scale)
-            return (capacity.toDouble() * level / scale / density.tileDivisor).roundToInt()
-                .coerceAtLeast(density.minimumTiles).coerceAtMost(capacity)
+            return (capacity.toDouble() * level / scale).roundToInt()
+                .coerceAtLeast(minimumTiles).coerceAtMost(capacity)
         }
 
         // Impulsions brusques, coupures et reprises : pas de fondu régulier.
@@ -52,6 +52,14 @@ class TilePopulation(
         if (target == next) return
         target = next
         if (transition == null) nextChange = now
+    }
+
+    /** Pendant la charge, ajuster le nombre sans déplacer les tuiles existantes. */
+    fun settleTarget() {
+        completeTransition()
+        while (occupied.size > target) occupied.remove(occupied.random(random))
+        val empty = (0 until capacity).filterNot { it in occupied }.shuffled(random)
+        occupied.addAll(empty.take(target - occupied.size))
     }
 
     /** Suspend une transition à son état final, sans rattrapage d'animations au réveil. */

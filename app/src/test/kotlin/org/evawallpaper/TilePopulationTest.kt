@@ -5,12 +5,12 @@ import org.junit.Test
 import kotlin.random.Random
 
 class TilePopulationTest {
-    @Test fun densityTracksBatteryWithAnAbsoluteMinimum() {
-        assertEquals(50, TilePopulation.countForBattery(200, 100, 100))
-        assertEquals(25, TilePopulation.countForBattery(200, 50, 100))
-        assertEquals(10, TilePopulation.countForBattery(200, 0, 100))
-        assertEquals(10, TilePopulation.countForBattery(60, 50, 100))
-        assertEquals(25, TilePopulation.countForBattery(200, 1, 2))
+    @Test fun populationTracksBatteryWithSevenAsDefaultMinimum() {
+        assertEquals(200, TilePopulation.countForBattery(200, 100, 100))
+        assertEquals(100, TilePopulation.countForBattery(200, 50, 100))
+        assertEquals(7, TilePopulation.countForBattery(200, 0, 100))
+        assertEquals(30, TilePopulation.countForBattery(60, 50, 100))
+        assertEquals(100, TilePopulation.countForBattery(200, 1, 2))
         assertEquals(6, TilePopulation.countForBattery(6, 0, 100))
         assertEquals(0, TilePopulation.countForBattery(0, 100, 100))
     }
@@ -37,7 +37,7 @@ class TilePopulationTest {
 
     @Test fun changedBatteryAdjustsPopulationEvenWithinTheSameColorBand() {
         val scene = TilePopulation(200, 50, 0L, Random(3))
-        scene.setTarget(TilePopulation.countForBattery(200, 50, 100), 0L)
+        scene.setTarget(TilePopulation.countForBattery(200, 125, 1000), 0L)
         for (now in 0L..60_000L step 40L) {
             scene.advance(now)
             assertTrue(scene.lights(now).size >= 25)
@@ -83,31 +83,36 @@ class TilePopulationTest {
         assertTrue(cells.all { it.centerX >= 0 && it.centerX < 720 && it.centerY >= 0 && it.centerY < 1440 })
         assertTrue(layout.visibleCells(0, 0).isEmpty())
     }
-    @Test fun customMinimumAndDivisorDriveDensity() {
-        val density = TileDensity(minimumTiles = 5, tileDivisor = 8)
-        assertEquals(25, TilePopulation.countForBattery(200, 100, 100, density))
-        assertEquals(13, TilePopulation.countForBattery(200, 50, 100, density))
-        assertEquals(5, TilePopulation.countForBattery(200, 0, 100, density))
-        assertEquals(3, TilePopulation.countForBattery(3, 0, 100, density))
-        assertEquals(0, TilePopulation.countForBattery(200, 0, 100, TileDensity(0, 4)))
-        assertEquals(200, TilePopulation.countForBattery(200, 100, 100, TileDensity(0, 1)))
-        assertEquals(60, TilePopulation.countForBattery(60, 50, 100, TileDensity(100, 20)))
-        assertEquals(TileDensity(10, 4), WallpaperConfig().density)
+    @Test fun customMinimumIsCappedByAvailableCells() {
+        assertEquals(5, TilePopulation.countForBattery(200, 0, 100, 5))
+        assertEquals(3, TilePopulation.countForBattery(3, 0, 100, 5))
+        assertEquals(60, TilePopulation.countForBattery(60, 50, 100, 100))
+        assertEquals(7, WallpaperConfig().minimumTiles)
+        for (minimum in listOf(-1, 101)) {
+            assertThrows(IllegalArgumentException::class.java) { WallpaperConfig(minimumTiles = minimum) }
+        }
     }
 
-    @Test fun densitySettingsRejectInvalidValues() {
-        for ((minimum, divisor) in listOf(-1 to 4, 101 to 4, 10 to 0, 10 to 21)) {
-            assertThrows(IllegalArgumentException::class.java) { TileDensity(minimum, divisor) }
-        }
+    @Test fun chargingSettlesCountWithoutMovingExistingTiles() {
+        val scene = TilePopulation(80, 10, 0L, Random(8))
+        val initial = scene.lights(0L).map { it.cell }.toSet()
+        scene.setTarget(40, 0L)
+        scene.settleTarget()
+        assertEquals(40, scene.lights(0L).size)
+        assertTrue(scene.lights(0L).map { it.cell }.containsAll(initial))
+        assertTrue(scene.lights(0L).all { it.alpha == 1f })
+        scene.setTarget(0, 0L)
+        scene.settleTarget()
+        assertTrue(scene.lights(0L).isEmpty())
     }
 
     @Test fun disabledMinimumCanTurnOffAllTilesAndResumeLater() {
         val scene = TilePopulation(80, 10, 0L, Random(8))
-        scene.setTarget(TilePopulation.countForBattery(80, 0, 100, TileDensity(0, 4)), 0L)
+        scene.setTarget(TilePopulation.countForBattery(80, 0, 100, 0), 0L)
         for (now in 0L..30_000L step 40L) scene.advance(now)
         assertTrue(scene.lights(30_000L).isEmpty())
         assertNull(scene.nextDelay(30_000L))
-        scene.setTarget(TilePopulation.countForBattery(80, 100, 100, TileDensity(0, 8)), 30_000L)
+        scene.setTarget(TilePopulation.countForBattery(80, 125, 1000, 0), 30_000L)
         for (now in 30_000L..60_000L step 40L) scene.advance(now)
         scene.pause()
         assertEquals(10, scene.lights(60_000L).size)

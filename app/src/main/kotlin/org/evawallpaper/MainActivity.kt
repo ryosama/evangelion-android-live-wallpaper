@@ -104,9 +104,9 @@ class MainActivity : AppCompatActivity() {
             previewRow.addView(column, LinearLayout.LayoutParams(0, -2, 1f))
         }
         content.addView(previewRow)
-        content.addView(label("Niveaux de batterie", 21f))
-        content.addView(label("Déplace les trois curseurs pour répartir les quatre états. Chaque seuil appartient à l’état supérieur.", 14f))
-        content.addView(LinearLayout(this).apply {
+        val batterySection = section(content, "Batterie et nombre de tuiles")
+        batterySection.addView(label("Déplace les trois curseurs pour répartir les quatre états. Chaque seuil appartient à l’état supérieur.", 14f))
+        batterySection.addView(LinearLayout(this).apply {
             addView(label("0 %", 12f), LinearLayout.LayoutParams(0, -2, 1f))
             addView(label("100 %", 12f).apply { gravity = Gravity.END }, LinearLayout.LayoutParams(0, -2, 1f))
         })
@@ -120,10 +120,10 @@ class MainActivity : AppCompatActivity() {
             setLabelFormatter { "${it.toInt()} %" }
             contentDescription = "Seuils Mauvais, OK et Parfait, en pourcentage de batterie"
         }
-        content.addView(slider, LinearLayout.LayoutParams(-1, -2))
+        batterySection.addView(slider, LinearLayout.LayoutParams(-1, -2))
         ranges = label("")
         updateRanges()
-        content.addView(ranges)
+        batterySection.addView(ranges)
         slider.addOnChangeListener { control, _, fromUser ->
             if (fromUser) {
                 val values = control.values.map { it.toInt() }
@@ -136,54 +136,32 @@ class MainActivity : AppCompatActivity() {
                 updateRanges()
             }
         }
-        content.addView(label(getString(R.string.density_title), 21f))
-        content.addView(label(getString(R.string.density_description), 14f))
-        val minimumLabel = label(getString(R.string.minimum_tiles_value, draft.density.minimumTiles))
-        content.addView(minimumLabel)
-        content.addView(Slider(this).apply {
+        batterySection.addView(label(getString(R.string.population_title), 21f))
+        batterySection.addView(label(getString(R.string.population_description), 14f))
+        val minimumLabel = label(getString(R.string.minimum_tiles_value, draft.minimumTiles))
+        batterySection.addView(minimumLabel)
+        batterySection.addView(Slider(this).apply {
             valueFrom = 0f
             valueTo = 100f
             stepSize = 1f
-            value = draft.density.minimumTiles.toFloat()
+            value = draft.minimumTiles.toFloat()
             contentDescription = getString(R.string.minimum_tiles_accessibility)
             setLabelFormatter { getString(R.string.tile_count_value, it.toInt()) }
             addOnChangeListener { _, value, fromUser ->
                 if (fromUser) {
-                    draft = draft.copy(density = draft.density.copy(minimumTiles = value.toInt()))
-                    minimumLabel.text = getString(R.string.minimum_tiles_value, draft.density.minimumTiles)
+                    draft = draft.copy(minimumTiles = value.toInt())
+                    minimumLabel.text = getString(R.string.minimum_tiles_value, draft.minimumTiles)
                 }
             }
         }, LinearLayout.LayoutParams(-1, -2))
-        val ratioLabel = label(getString(R.string.tile_ratio_value, draft.density.tileDivisor))
-        content.addView(ratioLabel)
-        content.addView(Slider(this).apply {
-            valueFrom = 1f
-            valueTo = 20f
-            stepSize = 1f
-            value = draft.density.tileDivisor.toFloat()
-            contentDescription = getString(R.string.tile_ratio_accessibility)
-            setLabelFormatter { getString(R.string.one_in_value, it.toInt()) }
-            addOnChangeListener { _, value, fromUser ->
-                if (fromUser) {
-                    draft = draft.copy(density = draft.density.copy(tileDivisor = value.toInt()))
-                    ratioLabel.text = getString(R.string.tile_ratio_value, draft.density.tileDivisor)
-                }
-            }
-        }, LinearLayout.LayoutParams(-1, -2))
-        content.addView(label(getString(R.string.effects_title), 21f))
-        content.addView(effectSelector(R.string.appearance_effect, R.string.fade_in, draft.effects.appearance) {
-            draft = draft.copy(effects = draft.effects.copy(appearance = it))
-        })
-        content.addView(effectSelector(R.string.disappearance_effect, R.string.fade_out, draft.effects.disappearance) {
-            draft = draft.copy(effects = draft.effects.copy(disappearance = it))
-        })
-        content.addView(label("Couleurs et textes", 21f))
+        val colorSection = section(content, "Couleurs — Parfait, OK, Mauvais, Critique")
         BatteryBand.entries.forEachIndexed { index, _ ->
-            content.addView(label(names[index], 18f))
+            colorSection.addView(label(names[index], 18f))
             val colorButton = button(getString(R.string.color_button, hex(draft.styles[index].color))) {}
             styleColorButton(colorButton, draft.styles[index].color)
             colorButton.setOnClickListener {
-                chooseColor(index) {
+                chooseColor(names[index], draft.styles[index].color) { color ->
+                    updateStyle(index, draft.styles[index].copy(color = color))
                     colorButton.text = getString(R.string.color_button, hex(draft.styles[index].color))
                     styleColorButton(colorButton, draft.styles[index].color)
                     slider.segmentColors = draft.styles.reversed().map { it.color }
@@ -191,7 +169,7 @@ class MainActivity : AppCompatActivity() {
                     updateRanges()
                 }
             }
-            content.addView(colorButton)
+            colorSection.addView(colorButton)
             val text = EditText(this).apply {
                 hint = "Texte de la tuile (vide = aucun)"
                 setHintTextColor(Color.LTGRAY)
@@ -210,8 +188,61 @@ class MainActivity : AppCompatActivity() {
                     override fun afterTextChanged(s: Editable?) = Unit
                 })
             }
-            content.addView(text, LinearLayout.LayoutParams(-1, dp(56)))
+            colorSection.addView(text, LinearLayout.LayoutParams(-1, dp(56)))
         }
+        val chargeSection = section(content, "Effet de charge")
+        chargeSection.addView(label("Balayage du bas vers le haut et pulsation des tuiles allumées.", 14f))
+        val chargeColorButton = button(getString(R.string.color_button, hex(draft.charging.color))) {}
+        styleColorButton(chargeColorButton, draft.charging.color)
+        chargeColorButton.setOnClickListener {
+            chooseColor("Effet de charge", draft.charging.color) { color ->
+                draft = draft.copy(charging = draft.charging.copy(color = color))
+                chargeColorButton.text = getString(R.string.color_button, hex(color))
+                styleColorButton(chargeColorButton, color)
+            }
+        }
+        chargeSection.addView(chargeColorButton)
+        fun chargeControl(title: String, initial: Int, minimum: Int, maximum: Int,
+                          step: Int = 1, format: (Int) -> String = { "$it s" }, changed: (Int) -> Unit) {
+            val caption = label(getString(R.string.setting_value, title, format(initial)))
+            chargeSection.addView(caption)
+            chargeSection.addView(Slider(this).apply {
+                valueFrom = minimum.toFloat()
+                valueTo = maximum.toFloat()
+                stepSize = step.toFloat()
+                value = initial.toFloat()
+                contentDescription = title
+                setLabelFormatter { format(it.toInt()) }
+                addOnChangeListener { _, value, fromUser ->
+                    if (fromUser) {
+                        changed(value.toInt())
+                        caption.text = getString(R.string.setting_value, title, format(value.toInt()))
+                    }
+                }
+            }, LinearLayout.LayoutParams(-1, -2))
+        }
+        chargeControl("Durée du remplissage", draft.charging.fillSeconds, 1, 30) {
+            draft = draft.copy(charging = draft.charging.copy(fillSeconds = it))
+        }
+        chargeControl("Maintien de la couleur de charge", draft.charging.holdSeconds, 0, 60) {
+            draft = draft.copy(charging = draft.charging.copy(holdSeconds = it))
+        }
+        chargeControl("Durée du pulse (aller-retour)", draft.charging.pulseMillis, 200, 5000,
+            step = 100, format = { String.format(Locale.getDefault(), "%.1f s", it / 1000f) }) {
+            draft = draft.copy(charging = draft.charging.copy(pulseMillis = it))
+        }
+        chargeControl("Opacité minimale du pulse", draft.charging.minimumOpacity, 0, 100,
+            format = { "$it %" }) {
+            draft = draft.copy(charging = draft.charging.copy(minimumOpacity = it))
+        }
+        chargeSection.addView(label("Le pulse va de 100 % à cette opacité puis revient à 100 %. À 0 %, les tuiles disparaissent au creux ; à 100 %, elles restent opaques.", 14f))
+        val animationSection = section(content, "Animation des tuiles")
+        animationSection.addView(effectSelector(R.string.appearance_effect, R.string.fade_in, draft.effects.appearance) {
+            draft = draft.copy(effects = draft.effects.copy(appearance = it))
+        })
+        animationSection.addView(effectSelector(R.string.disappearance_effect, R.string.fade_out, draft.effects.disappearance) {
+            draft = draft.copy(effects = draft.effects.copy(disappearance = it))
+        })
         content.addView(button("Appliquer") {
             store.write(draft)
             Toast.makeText(this, "Réglages appliqués au fond d’écran", Toast.LENGTH_SHORT).show()
@@ -228,6 +259,20 @@ class MainActivity : AppCompatActivity() {
             showConfiguration()
             Toast.makeText(this, "Valeurs restaurées. Touche Appliquer pour enregistrer.", Toast.LENGTH_SHORT).show()
         })
+    }
+
+    private fun section(parent: LinearLayout, title: String): LinearLayout {
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(8), dp(12), dp(16))
+            setBackgroundColor(Color.rgb(27, 27, 33))
+        }
+        parent.addView(panel, LinearLayout.LayoutParams(-1, -2).apply {
+            topMargin = dp(16)
+            bottomMargin = dp(8)
+        })
+        panel.addView(label(title, 21f))
+        return panel
     }
 
     private fun styleColorButton(button: MaterialButton, color: Int) {
@@ -282,7 +327,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun hex(color: Int) = String.format(Locale.ROOT, "#%06X", color and 0xFFFFFF)
 
-    private fun chooseColor(index: Int, changed: () -> Unit) {
+    private fun chooseColor(title: String, initialColor: Int, changed: (Int) -> Unit) {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(24), dp(8), dp(24), dp(8))
@@ -292,16 +337,16 @@ class MainActivity : AppCompatActivity() {
             hint = "#RRGGBB"
             contentDescription = "Code de couleur hexadécimal"
             filters = arrayOf(InputFilter.LengthFilter(7))
-            setText(hex(draft.styles[index].color))
+            setText(hex(initialColor))
         }
         panel.addView(input)
         val swatch = TextView(this).apply {
             text = " "
-            setBackgroundColor(draft.styles[index].color)
+            setBackgroundColor(initialColor)
         }
         panel.addView(swatch, LinearLayout.LayoutParams(-1, dp(32)))
         // Un sélecteur RGB permet le choix visuel, sans connaître un code couleur.
-        val channels = intArrayOf(Color.red(draft.styles[index].color), Color.green(draft.styles[index].color), Color.blue(draft.styles[index].color))
+        val channels = intArrayOf(Color.red(initialColor), Color.green(initialColor), Color.blue(initialColor))
         val colorBars = mutableListOf<android.widget.SeekBar>()
         listOf("Rouge", "Vert", "Bleu").forEachIndexed { channel, name ->
             panel.addView(TextView(this).apply { text = name })
@@ -337,7 +382,7 @@ class MainActivity : AppCompatActivity() {
                 colorBars.forEachIndexed { index, bar -> bar.progress = channels[index] }
             }
         })
-        val dialog = MaterialAlertDialogBuilder(this).setTitle("Couleur — ${names[index]}")
+        val dialog = MaterialAlertDialogBuilder(this).setTitle("Couleur — $title")
             .setView(panel).setNegativeButton("Annuler", null).setPositiveButton("Choisir", null).create()
         dialog.setOnShowListener {
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener {
@@ -345,8 +390,7 @@ class MainActivity : AppCompatActivity() {
                 if (!value.matches(Regex("#[0-9a-fA-F]{6}"))) {
                     input.error = "Utilise le format #RRGGBB"
                 } else {
-                    updateStyle(index, draft.styles[index].copy(color = value.toColorInt()))
-                    changed()
+                    changed(value.toColorInt())
                     dialog.dismiss()
                 }
             }

@@ -32,6 +32,8 @@ class EvaWallpaperService : WallpaperService() {
         private val frame = Runnable { drawMosaic() }
         private var cells = emptyList<MosaicLayout.Cell>()
         private var population: TilePopulation? = null
+        private var charging = false
+        private var chargeStart = 0L
         private var batteryLevel = -1
         private var batteryScale = 100
         private var surfaceWidth = 0
@@ -41,11 +43,13 @@ class EvaWallpaperService : WallpaperService() {
         private var lastBattery: Intent? = null
         private val configListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
             config = store.read()
+            chargeStart = SystemClock.uptimeMillis()
             band = null
             lastBattery?.let(::updateBattery)
         }
         private var band: BatteryBand? = null
         private var tile: Bitmap? = null
+        private var chargeTile: Bitmap? = null
         private val batteryReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_BATTERY_CHANGED) updateBattery(intent)
@@ -67,7 +71,8 @@ class EvaWallpaperService : WallpaperService() {
                     receiverRegistered = true
                     current?.let(::updateBattery)
                 }
-                population?.resume(SystemClock.uptimeMillis())
+                chargeStart = SystemClock.uptimeMillis()
+                population?.resume(chargeStart)
                 drawMosaic()
             } else {
                 handler.removeCallbacks(frame)
@@ -108,6 +113,8 @@ class EvaWallpaperService : WallpaperService() {
             store.preferences.unregisterOnSharedPreferenceChangeListener(configListener)
             tile?.recycle()
             tile = null
+            chargeTile?.recycle()
+            chargeTile = null
             super.onDestroy()
         }
 
@@ -127,11 +134,22 @@ class EvaWallpaperService : WallpaperService() {
             ) ?: return
             batteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             batteryScale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+            val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
+            val nextCharging = plugged && (status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL)
+            if (charging != nextCharging) {
+                charging = nextCharging
+                chargeStart = SystemClock.uptimeMillis()
+                if (charging) population?.pause() else population?.resume(chargeStart)
+            }
             updatePopulation()
             if (next != band) {
                 val nextTile = TileRenderer.render(resources, next, config.style(next))
                 tile?.recycle()
                 tile = nextTile
+                chargeTile?.recycle()
+                chargeTile = TileRenderer.render(resources, next, config.style(next).copy(color = config.charging.color))
                 band = next
             }
             drawMosaic()
@@ -140,7 +158,7 @@ class EvaWallpaperService : WallpaperService() {
         private fun updatePopulation() {
             if (batteryLevel < 0 || cells.isEmpty()) return
             val now = SystemClock.uptimeMillis()
-            val count = TilePopulation.countForBattery(cells.size, batteryLevel, batteryScale, config.density)
+            val count = TilePopulation.countForBattery(cells.size, batteryLevel, batteryScale, config.minimumTiles)
             val current = population
             if (current == null) {
                 population = TilePopulation(cells.size, count, now, effects = config.effects)
@@ -148,6 +166,7 @@ class EvaWallpaperService : WallpaperService() {
                 current.setEffects(config.effects)
                 current.setTarget(count, now)
             }
+            if (charging) population?.settleTarget()
         }
 
         private fun drawMosaic() {
@@ -155,7 +174,7 @@ class EvaWallpaperService : WallpaperService() {
             if (!visible || !surfaceReady) return
             val now = SystemClock.uptimeMillis()
             val scene = population
-            scene?.advance(now)
+            if (!charging) scene?.advance(now)
             val holder = surfaceHolder
             val canvas = holder.lockCanvas()
             if (canvas == null) {
@@ -166,22 +185,27 @@ class EvaWallpaperService : WallpaperService() {
                 canvas.drawColor(Color.BLACK)
                 val bitmap = tile
                 if (bitmap != null && scene != null) {
-                    for (light in scene.lights(now)) {
+                    val lights = scene.lights(now)
+                    val elapsed = now - chargeStart
+                    val chargedCells = if (charging) ChargingPulse.bottomToTop(cells, lights)
+                        .take(ChargingPulse.filledCount(elapsed, lights.size, config.charging)).toSet() else emptySet()
+                    val pulse = if (charging) ChargingPulse.alpha(elapsed, config.charging) else 1f
+                    for (light in lights) {
                         val cell = cells[light.cell]
                         destination.set(
                             cell.centerX - layout.tileWidth / 2, cell.centerY - layout.tileHeight / 2,
                             cell.centerX + layout.tileWidth / 2, cell.centerY + layout.tileHeight / 2,
                         )
-                        paint.alpha = (light.alpha * 255).toInt().coerceIn(0, 255)
-                        canvas.drawBitmap(bitmap, null, destination, paint)
+                        paint.alpha = (light.alpha * pulse * 255).toInt().coerceIn(0, 255)
+                        canvas.drawBitmap(if (light.cell in chargedCells) chargeTile ?: bitmap else bitmap, null, destination, paint)
                     }
                 }
             } finally {
                 paint.alpha = 255
                 holder.unlockCanvasAndPost(canvas)
             }
-            // 25 images/s uniquement pendant le starter ; aucune boucle de rendu entre les relais.
-            scene?.nextDelay(now)?.let { handler.postDelayed(frame, it) }
+            // 25 images/s pendant les transitions ou la charge ; attente entre les relais sinon.
+            (if (charging) TilePopulation.FRAME_MS else scene?.nextDelay(now))?.let { handler.postDelayed(frame, it) }
         }
     }
 }

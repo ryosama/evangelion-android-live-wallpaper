@@ -87,7 +87,8 @@ plusieurs Go. Ne pas considérer l’émulateur comme validé tant qu’il n’a
 
 ## Configuration
 
-L’icône de l’application ouvre les réglages. Ils sont aussi accessibles depuis
+L’icône de l’application ouvre les réglages, regroupés en panneaux : batterie et
+nombre de tuiles, couleurs des quatre états, effet de charge, animation des tuiles. Ils sont aussi accessibles depuis
 les réglages du fond d’écran, lorsque le sélecteur Android expose cette action.
 
 - Aperçu des quatre tuiles : **Parfait**, **OK**, **Mauvais**, **Critique**.
@@ -96,11 +97,19 @@ les réglages du fond d’écran, lorsque le sélecteur Android expose cette act
   Pas de 1 %, curseurs non croisables, séparation minimale de 1 point.
   Le seuil appartient toujours à l’état supérieur. Les quatre plages restent
   valides, même avec des seuils à 98, 99 et 100 %.
-- **Densité des tuiles (0.6.0)** : deux curseurs règlent le minimum de tuiles
-  allumées (0 à 100, défaut 10) et la proportion à batterie pleine (une tuile sur
-  1 à 20, défaut 4). Zéro désactive le minimum. La capacité de la grille reste
-  la limite supérieure. Le bouton Appliquer enregistre ces valeurs et ajuste
-  progressivement la population, avec l’animation existante.
+- **Nombre de tuiles (0.8.0)** : 100 % de batterie allume toute la grille,
+  50 % en allume la moitié. Un curseur fixe le minimum (0 à 100, défaut 7),
+  dans la limite de la capacité de la grille. Zéro désactive le minimum.
+- **Effet de charge (0.9.0)** : les tuiles allumées gardent leurs positions
+  et pulsent ensemble entre 100 % et une opacité minimale réglable (40 % par défaut, de 0 à 100 %).
+  Un pulse complet dure 1 s par défaut, réglable de 0,2 à 5 s par pas de 0,1 s.
+  La couleur de charge est réglable, bleue (#0088FF) par défaut.
+  Les tuiles changent de couleur une par une du bas vers le haut (de gauche
+  à droite à hauteur égale). Le remplissage dure 4 s par défaut, réglable de
+  1 à 30 s ; le maintien de la couleur de charge dure 5 s, réglable de 0 à 60 s.
+  Les couleurs normales reviennent au début de chaque cycle. Les textes restent.
+  La pulsation continue pendant le maintien. Le bouton de couleur reflète la sélection. La proportion liée à la batterie
+  reste valable pendant la charge. Les déplacements reprennent au débranchement.
 - **Effets des tuiles (0.7.0)** : apparition au choix entre clignotement et fondu
   entrant (fade in), disparition au choix entre clignotement et fondu sortant
   (fade out). Les deux choix sont indépendants et enregistrés avec Appliquer.
@@ -118,9 +127,12 @@ les réglages du fond d’écran, lorsque le sélecteur Android expose cette act
 
 Les modifications non appliquées survivent à une rotation de l’écran. Les réglages
 appliqués sont conservés localement et restaurés au redémarrage. Les anciennes
-configurations sans réglages de densité conservent leurs couleurs, textes et seuils,
-avec le minimum 10 et la proportion 4. La restauration des valeurs par défaut
-réinitialise également ces deux nouveaux curseurs. Les quatre PNG
+configurations conservent leurs couleurs, textes, seuils et minimum enregistré.
+Sans minimum enregistré, la valeur utilisée est 7. L’ancien réglage de proportion
+est ignoré et disparaît à la prochaine sauvegarde. Les durées de charge prennent
+leurs valeurs par défaut si elles ne sont pas encore enregistrées. La mise à jour
+conserve les durées de remplissage et maintien ; les nouveaux paramètres démarrent
+en bleu, à 1 s et 40 % d’opacité minimale. Les quatre PNG
 originaux sont utilisés pour les valeurs par défaut ; les tuiles personnalisées
 reprennent leur motif sans texte, recoloré, puis leur propre texte est dessiné.
 L’espacement reste de 3 pixels. Les noms des états sont des libellés de configuration,
@@ -150,19 +162,17 @@ le nombre de tuiles, même dans la même tranche. Le niveau courant est relu au
 retour à l’écran. Une lecture invalide conserve le dernier état connu (fond noir
 avant la première lecture valide).
 
-### Densité et animation fluorescente (0.5.0)
+### Population et animation (0.8.0)
 
 Pour `N` emplacements visibles, le nombre cible est :
 
 ```text
-min(N, max(minimum, arrondi(N × pourcentage_batterie / (100 × proportion))))
+min(N, max(minimum, arrondi(N × pourcentage_batterie / 100)))
 ```
 
-Avec les valeurs par défaut (minimum 10, proportion 4), à 100 %, environ une
-tuile sur quatre est allumée ; à 50 %, une sur huit ;
-à 25 %, une sur seize. Le minimum de dix prévaut lorsque le calcul donne moins.
-Par exemple, sur une grille de 60 emplacements : 15 tuiles à 100 %, puis au
-moins 10 à 50 %. Une surface possédant moins de dix emplacements les utilise tous.
+Avec le minimum par défaut de 7, une grille de 60 emplacements affiche
+60 tuiles à 100 %, 30 à 50 %, 15 à 25 %, et au moins 7 aux faibles niveaux.
+Une grille de moins de 7 emplacements les utilise tous.
 
 Les positions initiales sont tirées au hasard. Après une pause aléatoire de
 1,8 à 4,2 secondes, une tuile quitte sa position pour un emplacement libre.
@@ -175,10 +185,10 @@ la seconde s’allume. Pendant ce relais, une position supplémentaire peut êtr
 partiellement allumée ; le nombre reste au moins égal à la cible en régime stable. Les diminutions et
 augmentations de densité se font également par clignotement, une tuile à la fois.
 
-Le moteur dessine à 25 images/s pendant les transitions uniquement. Entre deux
+Le moteur dessine à 25 images/s pendant les transitions et pendant la charge. Entre deux
 relais, il attend la prochaine échéance sans boucle de rendu. L’animation et les
 callbacks sont suspendus dès que le fond est caché ou sa surface détruite, puis
-reprennent sans rattrapage des animations manquées. Couleurs, textes et seuils
+reprennent sans rattrapage des animations manquées. Le cycle de charge repart du bas au retour visible. Couleurs, textes et seuils
 personnalisés restent conservés.
 
 Les PNG transparents de 512 pixels sont exportés fidèlement des SVG, recadrés
@@ -197,15 +207,20 @@ source scripts/env.sh
 
 Les tests couvrent les frontières 50/49,9, 30/29,9, 15/14,9 %, les lectures
 invalides et l’espacement dans les trois directions du pavage à plusieurs densités.
-Les tests vérifient aussi la densité, le minimum pendant les clignotements, les
+Les tests vérifient aussi la proportion, le minimum pendant les clignotements, les
 changements de niveau, les destinations distinctes et la pause/reprise.
 Les tests couvrent aussi les quatre combinaisons d’effets, les bornes et la
-progression du fondu, et le changement de choix pendant un relais. La couleur
-des boutons et les nouveaux choix d’effets de la 0.7.0 restent à vérifier sur
-le téléphone.
+progression du fondu, le changement de choix pendant un relais, les limites de la
+pulsation, les durées de remplissage/maintien et l’ordre du balayage.
+Validation visuelle sur téléphone : brancher/débrancher le chargeur, vérifier le
+balayage et la pulsation, modifier la couleur, les durées et l’opacité minimale puis Appliquer, masquer/réafficher
+le fond et vérifier les couleurs/textes ainsi que la reprise des déplacements.
+La batterie pleine reste animée tant que le chargeur est branché ; un état Android
+« branché mais pas en charge » ne déclenche pas cet effet.
 
 ## Références officielles
 
+- [Détection de la charge Android](https://developer.android.com/training/monitoring-device-state/battery-monitoring)
 - [RangeSlider à plusieurs curseurs](https://developer.android.com/reference/com/google/android/material/slider/RangeSlider)
 
 - [Outils Android](https://developer.android.com/studio#command-tools)
