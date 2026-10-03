@@ -76,13 +76,37 @@ class TilePopulationTest {
         assertTrue(scene.nextDelay(100_000L)!! >= 1800L)
     }
 
-    @Test fun visibleGridDoesNotCountOffscreenPositions() {
-        val layout = MosaicLayout(192f)
-        val cells = layout.visibleCells(720, 1440)
-        assertTrue(cells.size >= 10)
-        assertTrue(cells.all { it.centerX >= 0 && it.centerX < 720 && it.centerY >= 0 && it.centerY < 1440 })
-        assertTrue(layout.visibleCells(0, 0).isEmpty())
+    @Test fun visibleGridIncludesClippedTilesButNotFullyOffscreenTiles() {
+        val layout = MosaicLayout(168f)
+        val cells = layout.visibleCells(720, 1600)
+        // Régression : l’ancienne grille s’arrêtait avant cette colonne à droite.
+        assertTrue(cells.any { it.centerX >= 720 && it.centerX - layout.tileWidth / 2 < 720 })
+        assertTrue(cells.any { it.centerY >= 1600 && it.centerY - layout.tileHeight / 2 < 1600 })
+        assertTrue(cells.all {
+            it.centerX + layout.tileWidth / 2 > 0 && it.centerX - layout.tileWidth / 2 < 720 &&
+                it.centerY + layout.tileHeight / 2 > 0 && it.centerY - layout.tileHeight / 2 < 1600
+        })
+        assertEquals(cells.size, cells.distinct().size)
+        assertTrue(layout.visibleCells(0, 1600).isEmpty())
+        assertTrue(layout.visibleCells(720, 0).isEmpty())
     }
+
+    @Test fun gridExtendsToRightAndBottomInPortraitAndLandscape() {
+        for (tileWidth in listOf(96f, 168f, 192f, 288f, 384f)) {
+            val layout = MosaicLayout(tileWidth)
+            for ((width, height) in listOf(720 to 1600, 1600 to 720, 1080 to 2400, 1 to 1)) {
+                val cells = layout.visibleCells(width, height)
+                assertTrue(cells.maxOf { it.centerX } + layout.tileWidth / 2 >= width)
+                for (column in cells.groupBy { it.centerX }.values) {
+                    assertTrue(column.minOf { it.centerY } - layout.tileHeight / 2 <= MosaicLayout.GAP_PX)
+                    assertTrue(column.maxOf { it.centerY } + layout.tileHeight / 2 >= height - MosaicLayout.GAP_PX)
+                }
+                val count = TilePopulation.countForBattery(cells.size, 100, 100)
+                assertEquals(cells.size, count)
+            }
+        }
+    }
+
     @Test fun customMinimumIsCappedByAvailableCells() {
         assertEquals(5, TilePopulation.countForBattery(200, 0, 100, 5))
         assertEquals(3, TilePopulation.countForBattery(3, 0, 100, 5))

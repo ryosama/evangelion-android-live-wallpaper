@@ -24,13 +24,17 @@ class MosaicLayout(val tileWidth: Float) {
 
     data class Cell(val centerX: Float, val centerY: Float)
 
-    /** Ne compte que les tuiles dont le centre est réellement à l'écran. */
+    /** Inclut les tuiles partiellement visibles, même si leur centre est hors écran. */
     fun visibleCells(width: Int, height: Int): List<Cell> = buildList {
+        if (width <= 0 || height <= 0) return@buildList
+        val halfWidth = tileWidth / 2
+        val halfHeight = tileHeight / 2
         var column = 0
-        while (column * columnStep < width) {
-            var y = columnOffset(column)
-            while (y < height) {
-                add(Cell(column * columnStep, y))
+        while (column * columnStep - halfWidth < width) {
+            val x = column * columnStep
+            var y = columnOffset(column) - rowStep
+            while (y - halfHeight < height) {
+                if (y + halfHeight > 0) add(Cell(x, y))
                 y += rowStep
             }
             column++

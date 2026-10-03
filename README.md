@@ -123,6 +123,10 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Install / Installation
 
+**EN** — Download the signed APK from [GitHub Releases](https://github.com/ryosama/evangelion-android-live-wallpaper/releases). Open it on your Android device and allow installation from that source when prompted, or install it over USB with `adb install -r <downloaded-file.apk>`.
+
+**FR** — Télécharge l’APK signé depuis les [releases GitHub](https://github.com/ryosama/evangelion-android-live-wallpaper/releases). Ouvre-le sur ton appareil Android et autorise l’installation depuis cette source lorsque demandé, ou installe-le en USB avec `adb install -r <fichier-téléchargé.apk>`.
+
 **EN** — Enable Developer options and USB debugging on the device, connect it over USB, then accept the debugging authorization. Install and open the application:
 
 **FR** — Active les options développeur et le débogage USB sur l’appareil, connecte-le en USB, puis accepte l’autorisation de débogage. Installe et ouvre l’application :
