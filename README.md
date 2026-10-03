@@ -1,244 +1,165 @@
 # Evangelion Live Wallpaper
 
-Application Android privée, installée directement par USB, sans Google Play.
-Compatibilité : Android 8.0 (API 26) et versions ultérieures.
+**EN** — An Evangelion-inspired Android live wallpaper with hexagonal tiles that react to battery level and charging.
 
-## Environnement local
+**FR** — Un fond d’écran animé Android inspiré d’Evangelion, avec des tuiles hexagonales qui réagissent au niveau de batterie et à la charge.
 
-Les outils sont installés dans `.tools/`, exclus de Git. Aucun changement du shell global.
-Sur une nouvelle machine Linux x86_64 avec `curl`, `unzip` et `tar`, lancer
-`./scripts/setup.sh` puis accepter les licences Android présentées. Les archives
-Java et outils Android sont vérifiées par SHA-256. Prévoir plusieurs Go libres
-et un accès Internet pour les dépendances de la première compilation.
+## Screenshots / Captures d’écran
+
+**EN** — Examples of the four battery states and the charging effect. Colors, labels and thresholds are customizable; the battery percentage in the Android status bar does not necessarily match the demonstrated state. The ranges below are the defaults.
+
+**FR** — Exemples des quatre états de batterie et de l’effet de charge. Les couleurs, textes et seuils sont personnalisables ; le pourcentage de la barre d’état Android ne correspond pas nécessairement à l’état illustré. Les plages ci-dessous sont celles par défaut.
+
+### 1. Perfect / Parfait
+
+<img src="screenshots/charge%20perfect.png" width="270" alt="Perfect state: green hexagonal tiles / État Parfait : tuiles hexagonales vertes">
+
+**EN** — Green tiles indicate the highest battery range: **50–100%** by default.
+
+**FR** — Les tuiles vertes indiquent la plage de batterie la plus élevée : **de 50 à 100 %** par défaut.
+
+### 2. OK
+
+<img src="screenshots/charge%20ok.png" width="270" alt="OK state: yellow hexagonal tiles / État OK : tuiles hexagonales jaunes">
+
+**EN** — Yellow tiles indicate an intermediate battery level: **30% to below 50%** by default.
+
+**FR** — Les tuiles jaunes indiquent un niveau de batterie intermédiaire : **de 30 à moins de 50 %** par défaut.
+
+### 3. Low / Mauvais
+
+<img src="screenshots/charge%20low.png" width="270" alt="Low battery state: orange WARNING tiles / État Mauvais : tuiles orange WARNING">
+
+**EN** — Orange tiles display **WARNING** for a low battery level: **15% to below 30%** by default.
+
+**FR** — Les tuiles orange affichent **WARNING** lorsque la batterie est faible : **de 15 à moins de 30 %** par défaut.
+
+### 4. Very low / Critique
+
+<img src="screenshots/charge%20very%20low.png" width="270" alt="Critical battery state: red EMERGENCY tiles / État Critique : tuiles rouges EMERGENCY">
+
+**EN** — Red tiles display **EMERGENCY** for a critical battery level: **below 15%** by default.
+
+**FR** — Les tuiles rouges affichent **EMERGENCY** lorsque la batterie est critique : **moins de 15 %** par défaut.
+
+### 5. Charging / En charge
+
+<img src="screenshots/charging.png" width="270" alt="Charging effect: blue tiles filling from bottom to top / Effet de charge : remplissage bleu du bas vers le haut">
+
+**EN** — While charging, lit tiles pulse together and change to the charging color from bottom to top. This capture shows the blue sweep in progress. Once filled, the color is held briefly before the cycle restarts.
+
+**FR** — Pendant la charge, les tuiles allumées pulsent ensemble et prennent la couleur de charge du bas vers le haut. Cette capture montre le balayage bleu en cours. Une fois le remplissage terminé, la couleur est maintenue avant le début du cycle suivant.
+
+## Features / Fonctionnalités
+
+**EN**
+
+- Hexagonal mosaic on a black background, with 3 pixels between colored tile faces.
+- Four battery states with customizable thresholds, colors and text.
+- Tile count proportional to battery level, with a configurable minimum of 7 by default.
+- Random tile relocation with independent appearance and disappearance effects: fluorescent flicker or fade.
+- Charging animation with configurable color, pulse duration, minimum opacity, fill time and hold time.
+- Animation pauses when the wallpaper is hidden. Settings are stored locally.
+
+**FR**
+
+- Mosaïque hexagonale sur fond noir, avec 3 pixels entre les faces colorées des tuiles.
+- Quatre états de batterie avec seuils, couleurs et textes personnalisables.
+- Nombre de tuiles proportionnel à la batterie, avec un minimum réglable de 7 par défaut.
+- Déplacement aléatoire des tuiles avec effets d’apparition et de disparition indépendants : clignotement fluorescent ou fondu.
+- Animation de charge avec couleur, durée du pulse, opacité minimale, temps de remplissage et de maintien réglables.
+- Animation suspendue lorsque le fond est masqué. Réglages enregistrés localement.
+
+## Settings / Configuration
+
+**EN** — Open the application to configure the wallpaper. The interface is currently in French and organized into four sections. Tap **Appliquer** to save, or **Prévisualiser / choisir ce fond** to save and open Android’s wallpaper picker. Restoring defaults requires tapping **Appliquer** to save them.
+
+**FR** — Ouvre l’application pour configurer le fond d’écran. L’interface est organisée en quatre sections. Touche **Appliquer** pour enregistrer, ou **Prévisualiser / choisir ce fond** pour enregistrer et ouvrir le sélecteur de fond d’écran Android. Après une restauration des valeurs par défaut, touche **Appliquer** pour les enregistrer.
+
+| Section | Settings / Réglages | Defaults / Valeurs par défaut |
+| --- | --- | --- |
+| Battery / Batterie | State thresholds and minimum tile count / Seuils des états et minimum de tuiles | 15%, 30%, 50%; 7 tiles / tuiles |
+| Colors / Couleurs | Color and optional text for each state / Couleur et texte optionnel pour chaque état | Green, yellow, orange, red / Vert, jaune, orange, rouge |
+| Charging effect / Effet de charge | Color, full pulse duration and minimum opacity / Couleur, durée complète du pulse et opacité minimale | Blue / Bleu `#0088FF`; 1 s; 40% |
+| Charging effect / Effet de charge | Fill and hold durations / Durées de remplissage et de maintien | 4 s; 5 s |
+| Tile animation / Animation des tuiles | Appearance and disappearance effects / Effets d’apparition et de disparition | Flicker / Clignotement |
+
+**EN** — Pulse duration is one complete fade-out/fade-in cycle, adjustable from 0.2 to 5 seconds. Minimum opacity ranges from 0 to 100%: 40% means a pulse between 100% and 40% opacity. Fill time ranges from 1 to 30 seconds; hold time from 0 to 60 seconds.
+
+**FR** — La durée du pulse correspond à un cycle complet de fondu sortant puis entrant, réglable de 0,2 à 5 secondes. L’opacité minimale va de 0 à 100 % : 40 % signifie une pulsation entre 100 % et 40 % d’opacité. Le remplissage est réglable de 1 à 30 secondes, et le maintien de 0 à 60 secondes.
+
+## Build / Compilation
+
+**EN** — Requires Android 8.0 (API 26) or newer on the device. The provided setup scripts target Linux x86_64 and require `curl`, `unzip` and `tar`. Run these commands from the project directory. Initial setup requires Internet access, several GB of free space and acceptance of the Android SDK licenses.
+
+**FR** — L’appareil doit utiliser Android 8.0 (API 26) ou une version ultérieure. Les scripts d’installation ciblent Linux x86_64 et nécessitent `curl`, `unzip` et `tar`. Exécute ces commandes depuis le répertoire du projet. La première installation demande un accès Internet, plusieurs Go disponibles et l’acceptation des licences du SDK Android.
 
 ```bash
+./scripts/setup.sh
 source scripts/env.sh
-./scripts/doctor.sh
 ./scripts/build.sh
 ```
 
-Java Temurin 21, Gradle 8.11.1 (wrapper avec SHA-256), Android Gradle Plugin
-8.9.2, SDK de compilation 35 et Build Tools 35.0.0. Application compatible
-Android 8.0 et versions ultérieures, y compris Android 12. Kotlin 2.2.21 et Canvas,
-Interface Material Components ; aucun service externe. Gradle est limité à un worker
-et 1 Go de mémoire pour limiter les ressources utilisées. Le compilateur Kotlin fonctionne dans
-le processus Gradle pour éviter un second processus résident. Le JDK reste
-nécessaire aux outils de compilation ; les sources de l’application sont
-exclusivement en Kotlin, dans `app/src/main/kotlin/`.
+**EN** — The application is written in Kotlin. The build uses JDK 21, Gradle 8.11.1, Android Gradle Plugin 8.9.2, Kotlin 2.2.21 and Android SDK 35. Tools are installed locally in `.tools/`.
 
-Le SDK de compilation 35 n’impose pas Android 15 au téléphone : `minSdk 26`
-définit la version Android minimale.
+**FR** — L’application est écrite en Kotlin. La compilation utilise le JDK 21, Gradle 8.11.1, Android Gradle Plugin 8.9.2, Kotlin 2.2.21 et le SDK Android 35. Les outils sont installés localement dans `.tools/`.
 
-## Installer sur un appareil Android
+**EN** — To rebuild after editing, once dependencies are cached:
 
-1. Dans **Paramètres → À propos du téléphone**, toucher sept fois le numéro
-   de build pour activer les options développeur.
-2. Activer **Débogage USB** dans les options développeur.
-3. Connecter un câble USB de données, déverrouiller le téléphone et accepter
-   l’autorisation de débogage pour cet ordinateur.
-4. Depuis le répertoire du projet :
+**FR** — Pour recompiler après des modifications, une fois les dépendances téléchargées :
+
+```bash
+source scripts/env.sh
+./gradlew --offline --no-daemon :app:assembleDebug
+```
+
+**EN** — Remove `--offline` when adding dependencies that need downloading. Output APK:
+
+**FR** — Retire `--offline` si de nouvelles dépendances doivent être téléchargées. APK généré :
+
+```text
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+## Install / Installation
+
+**EN** — Enable Developer options and USB debugging on the device, connect it over USB, then accept the debugging authorization. Install and open the application:
+
+**FR** — Active les options développeur et le débogage USB sur l’appareil, connecte-le en USB, puis accepte l’autorisation de débogage. Installe et ouvre l’application :
 
 ```bash
 source scripts/env.sh
 adb devices -l
-./scripts/install-phone.sh
-```
-
-Le script compile, installe l’APK puis ouvre l’application. Toucher
-« Prévisualiser le fond animé », puis utiliser la confirmation Android pour
-l’appliquer. Le script cible un téléphone USB ; passer son numéro de série
-comme argument si plusieurs appareils sont branchés.
-
-Pour installer un APK déjà compilé, sans relancer la compilation :
-
-```bash
-source scripts/env.sh
 adb -d install -r app/build/outputs/apk/debug/app-debug.apk
 adb -d shell am start -n org.evawallpaper/.MainActivity
 ```
 
-L’APK est dans `app/build/outputs/apk/debug/app-debug.apk`. Il est signé avec
-la clé de développement automatiquement créée par les outils Android.
-`adb install -r` met à jour l’application en conservant ses données, si la
-signature est identique. Aucune publication ni compte Google Play nécessaire.
-Pour une distribution interne durable, il faudra une clé de signature dédiée,
-conservée hors Git et sauvegardée ; ce prototype utilise seulement la signature debug.
+**EN** — Tap **Prévisualiser / choisir ce fond**, then confirm in Android’s wallpaper picker. No Google Play account is required. This command installs a debug APK; updates preserve settings when both application ID and signing key match.
 
-Si `adb devices` indique `unauthorized`, accepter la demande sur le téléphone.
-Si la liste est vide, vérifier le câble et le mode USB. Sous Linux, installer les règles udev Android si nécessaire.
+**FR** — Touche **Prévisualiser / choisir ce fond**, puis confirme dans le sélecteur Android. Aucun compte Google Play n’est nécessaire. Cette commande installe une APK de développement ; les mises à jour conservent les réglages si l’identifiant d’application et la clé de signature restent identiques.
 
-## Émulateur
+## Development / Développement
 
-Un émulateur Android nécessite la virtualisation matérielle et KVM sous Linux.
-Sur une machine compatible disposant de suffisamment d’espace :
+**EN** — Main source files:
 
-```bash
-./scripts/emulator.sh
-# Dans un second terminal, après le démarrage d’Android :
-source scripts/env.sh
-./scripts/build.sh
-adb -e install -r app/build/outputs/apk/debug/app-debug.apk
-adb -e shell am start -n org.evawallpaper/.MainActivity
-```
+**FR** — Principaux fichiers sources :
 
-Le script crée à la demande un appareil Android 12 (API 31). L’image système
-n’est pas téléchargée sur une machine sans accélération, pour économiser
-plusieurs Go. Ne pas considérer l’émulateur comme validé tant qu’il n’a pas démarré.
-
-## Configuration
-
-L’icône de l’application ouvre les réglages, regroupés en panneaux : batterie et
-nombre de tuiles, couleurs des quatre états, effet de charge, animation des tuiles. Ils sont aussi accessibles depuis
-les réglages du fond d’écran, lorsque le sélecteur Android expose cette action.
-
-- Aperçu des quatre tuiles : **Parfait**, **OK**, **Mauvais**, **Critique**.
-- Une barre Material RangeSlider à quatre segments colorés, de 0 à 100 %, avec **trois curseurs** :
-  entrée dans Mauvais, OK puis Parfait. Valeurs initiales : 15, 30 et 50 %.
-  Pas de 1 %, curseurs non croisables, séparation minimale de 1 point.
-  Le seuil appartient toujours à l’état supérieur. Les quatre plages restent
-  valides, même avec des seuils à 98, 99 et 100 %.
-- **Nombre de tuiles (0.8.0)** : 100 % de batterie allume toute la grille,
-  50 % en allume la moitié. Un curseur fixe le minimum (0 à 100, défaut 7),
-  dans la limite de la capacité de la grille. Zéro désactive le minimum.
-- **Effet de charge (0.9.0)** : les tuiles allumées gardent leurs positions
-  et pulsent ensemble entre 100 % et une opacité minimale réglable (40 % par défaut, de 0 à 100 %).
-  Un pulse complet dure 1 s par défaut, réglable de 0,2 à 5 s par pas de 0,1 s.
-  La couleur de charge est réglable, bleue (#0088FF) par défaut.
-  Les tuiles changent de couleur une par une du bas vers le haut (de gauche
-  à droite à hauteur égale). Le remplissage dure 4 s par défaut, réglable de
-  1 à 30 s ; le maintien de la couleur de charge dure 5 s, réglable de 0 à 60 s.
-  Les couleurs normales reviennent au début de chaque cycle. Les textes restent.
-  La pulsation continue pendant le maintien. Le bouton de couleur reflète la sélection. La proportion liée à la batterie
-  reste valable pendant la charge. Les déplacements reprennent au débranchement.
-- **Effets des tuiles (0.7.0)** : apparition au choix entre clignotement et fondu
-  entrant (fade in), disparition au choix entre clignotement et fondu sortant
-  (fade out). Les deux choix sont indépendants et enregistrés avec Appliquer.
-  Le clignotement reste le défaut dans les deux directions, y compris après mise
-  à jour d’une ancienne configuration. Un relais déjà commencé conserve ses effets ;
-  le nouveau choix est utilisé au suivant.
-- Chaque état possède une couleur (sélecteur RGB ou code hexadécimal) et un
-  texte optionnel de 24 caractères maximum. Le texte est ajusté à la tuile.
-  Le bouton de couleur reflète la couleur sélectionnée dès sa validation, avec
-  un texte noir ou blanc et une bordure contrastée pour rester lisible.
-- **Appliquer** enregistre les réglages et actualise le fond installé.
-- **Prévisualiser / choisir ce fond** enregistre et ouvre le sélecteur Android.
-- **Restaurer les valeurs par défaut** restaure le brouillon ; toucher Appliquer
-  pour enregistrer cette restauration.
-
-Les modifications non appliquées survivent à une rotation de l’écran. Les réglages
-appliqués sont conservés localement et restaurés au redémarrage. Les anciennes
-configurations conservent leurs couleurs, textes, seuils et minimum enregistré.
-Sans minimum enregistré, la valeur utilisée est 7. L’ancien réglage de proportion
-est ignoré et disparaît à la prochaine sauvegarde. Les durées de charge prennent
-leurs valeurs par défaut si elles ne sont pas encore enregistrées. La mise à jour
-conserve les durées de remplissage et maintien ; les nouveaux paramètres démarrent
-en bleu, à 1 s et 40 % d’opacité minimale. Les quatre PNG
-originaux sont utilisés pour les valeurs par défaut ; les tuiles personnalisées
-reprennent leur motif sans texte, recoloré, puis leur propre texte est dessiné.
-L’espacement reste de 3 pixels. Les noms des états sont des libellés de configuration,
-ils ne remplacent pas les textes WARNING/EMERGENCY présents par défaut sur les tuiles.
-
-La validation sur téléphone doit couvrir les trois curseurs (y compris leurs
-limites), Appliquer, les couleurs/textes, la rotation et le retour au fond d’écran.
-
-## Mosaïque de batterie
-
-Les hexagones fournis dans `inspiration/` occupent une grille en nid
-d’abeilles (colonnes décalées), sur fond noir. Largeur actuelle : 96 dp. L’espace noir entre
-les faces colorées est de **3 pixels physiques**, quelle que soit la densité.
-Le calcul tient compte du contour noir des SVG. Les centres retenus sont dans la surface visible ; certaines tuiles sont
-partiellement coupées aux bords. Textes WARNING et EMERGENCY conservés.
-
-| Batterie | Tuile |
+| File / Fichier | Purpose / Rôle |
 | --- | --- |
-| 50 à 100 % | Verte |
-| 30 à moins de 50 % | Jaune |
-| 15 à moins de 30 % | Orange, WARNING |
-| 0 à moins de 15 % | Rouge, EMERGENCY |
+| [`MainActivity.kt`](app/src/main/kotlin/org/evawallpaper/MainActivity.kt) | Configuration interface / Interface de configuration |
+| [`EvaWallpaperService.kt`](app/src/main/kotlin/org/evawallpaper/EvaWallpaperService.kt) | Wallpaper rendering and lifecycle / Rendu et cycle de vie du fond |
+| [`WallpaperConfig.kt`](app/src/main/kotlin/org/evawallpaper/WallpaperConfig.kt) | Settings and defaults / Réglages et valeurs par défaut |
+| [`ChargingPulse.kt`](app/src/main/kotlin/org/evawallpaper/ChargingPulse.kt) | Charging animation timing / Calcul des animations de charge |
 
-Les mises à jour de batterie sont écoutées seulement quand le fond est visible.
-Une nouvelle tranche actualise le motif, et chaque changement de niveau recalcule
-le nombre de tuiles, même dans la même tranche. Le niveau courant est relu au
-retour à l’écran. Une lecture invalide conserve le dernier état connu (fond noir
-avant la première lecture valide).
+**EN** — Run unit tests and Android lint:
 
-### Population et animation (0.8.0)
-
-Pour `N` emplacements visibles, le nombre cible est :
-
-```text
-min(N, max(minimum, arrondi(N × pourcentage_batterie / 100)))
-```
-
-Avec le minimum par défaut de 7, une grille de 60 emplacements affiche
-60 tuiles à 100 %, 30 à 50 %, 15 à 25 %, et au moins 7 aux faibles niveaux.
-Une grille de moins de 7 emplacements les utilise tous.
-
-Les positions initiales sont tirées au hasard. Après une pause aléatoire de
-1,8 à 4,2 secondes, une tuile quitte sa position pour un emplacement libre.
-Le relais dure entre 0,85 et 1,35 seconde. Le clignotement utilise des impulsions
-et coupures irrégulières rappelant un starter fluorescent. Le fondu utilise une
-progression douce, continue et monotone de l’opacité. Chaque direction suit son
-effet choisi ; lorsque les deux effets sont identiques, les opacités de l’ancienne
-et de la nouvelle position sont complémentaires. La première s’éteint pendant que
-la seconde s’allume. Pendant ce relais, une position supplémentaire peut être
-partiellement allumée ; le nombre reste au moins égal à la cible en régime stable. Les diminutions et
-augmentations de densité se font également par clignotement, une tuile à la fois.
-
-Le moteur dessine à 25 images/s pendant les transitions et pendant la charge. Entre deux
-relais, il attend la prochaine échéance sans boucle de rendu. L’animation et les
-callbacks sont suspendus dès que le fond est caché ou sa surface détruite, puis
-reprennent sans rattrapage des animations manquées. Le cycle de charge repart du bas au retour visible. Couleurs, textes et seuils
-personnalisés restent conservés.
-
-Les PNG transparents de 512 pixels sont exportés fidèlement des SVG, recadrés
-sur le dessin, et stockés dans `drawable-nodpi`. Pour les régénérer avec Inkscape :
-
-```bash
-./scripts/export-tiles.sh
-```
-
-Compilation et vérifications :
+**FR** — Exécuter les tests unitaires et l’analyse Android :
 
 ```bash
 source scripts/env.sh
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+./gradlew --offline --no-daemon :app:testDebugUnitTest :app:lintDebug
 ```
 
-Les tests couvrent les frontières 50/49,9, 30/29,9, 15/14,9 %, les lectures
-invalides et l’espacement dans les trois directions du pavage à plusieurs densités.
-Les tests vérifient aussi la proportion, le minimum pendant les clignotements, les
-changements de niveau, les destinations distinctes et la pause/reprise.
-Les tests couvrent aussi les quatre combinaisons d’effets, les bornes et la
-progression du fondu, le changement de choix pendant un relais, les limites de la
-pulsation, les durées de remplissage/maintien et l’ordre du balayage.
-Validation visuelle sur téléphone : brancher/débrancher le chargeur, vérifier le
-balayage et la pulsation, modifier la couleur, les durées et l’opacité minimale puis Appliquer, masquer/réafficher
-le fond et vérifier les couleurs/textes ainsi que la reprise des déplacements.
-La batterie pleine reste animée tant que le chargeur est branché ; un état Android
-« branché mais pas en charge » ne déclenche pas cet effet.
+**EN** — An optional Android 12 emulator can be started with `./scripts/emulator.sh` on a Linux machine with hardware virtualization and KVM. Use `adb -e` instead of `adb -d` to target it.
 
-## Références officielles
-
-- [Détection de la charge Android](https://developer.android.com/training/monitoring-device-state/battery-monitoring)
-- [RangeSlider à plusieurs curseurs](https://developer.android.com/reference/com/google/android/material/slider/RangeSlider)
-
-- [Outils Android](https://developer.android.com/studio#command-tools)
-- [Prérequis Android Studio](https://developer.android.com/studio/install)
-- [Accélération de l’émulateur](https://developer.android.com/studio/run/emulator-acceleration)
-- [Déploiement USB](https://developer.android.com/studio/run/device?hl=fr)
-- [Configuration Kotlin et compatibilité Gradle](https://kotlinlang.org/docs/gradle-configure-project.html)
-- [Compatibilité AGP 8.9](https://developer.android.com/build/releases/agp-8-9-0-release-notes)
-
-## Validation
-
-Compiler l’APK, exécuter les tests et l’analyse Android avant installation.
-Vérifier le rendu et le cycle de vie du fond sur un appareil compatible.
-
-## Publication du dépôt
-
-Ne publier que les fichiers suivis par Git. Les outils locaux, caches, journaux,
-APK, clés de signature et paramètres privés sont exclus par `.gitignore`.
-L’identifiant Android du projet est `org.evawallpaper`. Un changement d’identifiant
-crée une application distincte : les réglages d’une ancienne installation ne
-sont pas transférés automatiquement.
+**FR** — Un émulateur Android 12 peut être lancé avec `./scripts/emulator.sh` sur une machine Linux disposant de la virtualisation matérielle et de KVM. Utilise `adb -e` à la place de `adb -d` pour le cibler.

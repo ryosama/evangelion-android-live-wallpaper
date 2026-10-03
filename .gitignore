@@ -27,5 +27,10 @@ service-account*.json
 .codex/
 .aws/
 
-# Captures locales : vérifier leur contenu avant toute publication
-screenshots/
+# Seules les captures vérifiées sont publiables
+screenshots/*
+!screenshots/charge low.png
+!screenshots/charge ok.png
+!screenshots/charge perfect.png
+!screenshots/charge very low.png
+!screenshots/charging.png
