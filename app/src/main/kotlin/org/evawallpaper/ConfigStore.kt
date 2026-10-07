@@ -5,20 +5,34 @@ import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Frontière JSON entre WallpaperConfig, le brouillon de MainActivity et le moteur du fond. */
 class ConfigStore(context: Context) {
+    // Stockage privé partagé par activité et service ; exposé pour que le moteur observe les changements.
     val preferences = context.getSharedPreferences("wallpaper", Context.MODE_PRIVATE)
 
+    /**
+     * Charge le JSON persistant. Une absence ou une configuration illisible/invalide rétablit
+     * WallpaperConfig par défaut, sans faire échouer l’écran ou le service.
+     */
     fun read(): WallpaperConfig = runCatching {
         val json = preferences.getString("config", null) ?: return WallpaperConfig()
         decode(json)
     }.getOrDefault(WallpaperConfig())
 
+    /**
+     * Enregistre la configuration en une seule valeur JSON. MainActivity l’appelle à la validation ; le
+     * listener du service reçoit ensuite le changement.
+     */
     fun write(config: WallpaperConfig) {
         // Un seul changement atomique pour que le fond ne voie pas de réglages partiels.
         preferences.edit { putString("config", encode(config)) }
     }
 
     companion object {
+        /**
+         * Sérialise les réglages pour SharedPreferences et pour le brouillon sauvegardé par MainActivity
+         * lors d’une recréation Android.
+         */
         fun encode(config: WallpaperConfig): String = JSONObject().apply {
             put("bad", config.thresholds.bad)
             put("ok", config.thresholds.ok)
@@ -38,8 +52,13 @@ class ConfigStore(context: Context) {
             })
         }.toString()
 
+        /**
+         * Reconstruit et valide les modèles. Les nouveaux champs absents reçoivent leurs défauts ; les
+         * limites des curseurs sont appliquées aux valeurs persistées.
+         */
         fun decode(json: String): WallpaperConfig {
             val root = JSONObject(json)
+            // Table ordonnée comme BatteryBand ; exactement quatre styles sont nécessaires.
             val styles = root.getJSONArray("styles")
             require(styles.length() == 4)
             return WallpaperConfig(

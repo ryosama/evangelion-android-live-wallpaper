@@ -5,6 +5,10 @@ import org.junit.Test
 import kotlin.random.Random
 
 class TilePopulationTest {
+    /**
+     * Vérifie le lien niveau/capacité et le plancher par défaut, y compris une grille plus petite que ce
+     * plancher.
+     */
     @Test fun populationTracksBatteryWithSevenAsDefaultMinimum() {
         assertEquals(200, TilePopulation.countForBattery(200, 100, 100))
         assertEquals(100, TilePopulation.countForBattery(200, 50, 100))
@@ -14,6 +18,11 @@ class TilePopulationTest {
         assertEquals(6, TilePopulation.countForBattery(6, 0, 100))
         assertEquals(0, TilePopulation.countForBattery(0, 100, 100))
     }
+
+    /**
+     * Suit une scène sur plusieurs relais pour vérifier les déplacements, le clignotement, l’absence de
+     * doublons et la conservation de l’opacité totale.
+     */
 
     @Test fun relaysFlickerAndMoveWithoutFallingBelowTen() {
         val scene = TilePopulation(80, 10, 0L, Random(42))
@@ -34,6 +43,11 @@ class TilePopulationTest {
         assertTrue(moved)
         assertTrue(flickered)
     }
+
+    /**
+     * Vérifie que modifier la cible suffit à faire évoluer progressivement la population, indépendamment du
+     * choix de couleur du service.
+     */
 
     @Test fun changedBatteryAdjustsPopulationEvenWithinTheSameColorBand() {
         val scene = TilePopulation(200, 50, 0L, Random(3))
@@ -57,12 +71,19 @@ class TilePopulationTest {
         assertEquals(30, scene.lights(150_000L).size)
     }
 
+    /** Une grille pleine sans destination libre reste stable et ne demande aucun prochain rendu. */
+
     @Test fun fullSmallGridsDoNotBlinkOrScheduleBusyLoops() {
         val scene = TilePopulation(6, 6, 0L, Random(1))
         scene.advance(10_000L)
         assertEquals(6, scene.lights(10_000L).size)
         assertNull(scene.nextDelay(10_000L))
     }
+
+    /**
+     * Simule une longue période masquée : reprendre conserve les positions sans rejouer les animations
+     * manquées.
+     */
 
     @Test fun resumeKeepsPositionsAndDoesNotCatchUpWhileHidden() {
         val scene = TilePopulation(80, 10, 0L, Random(5))
@@ -75,6 +96,11 @@ class TilePopulationTest {
         assertEquals(settled, scene.lights(100_000L))
         assertTrue(scene.nextDelay(100_000L)!! >= 1800L)
     }
+
+    /**
+     * Protège la correction des bords : les bitmaps partiellement visibles comptent, les rectangles
+     * entièrement hors surface non.
+     */
 
     @Test fun visibleGridIncludesClippedTilesButNotFullyOffscreenTiles() {
         val layout = MosaicLayout(168f)
@@ -90,6 +116,8 @@ class TilePopulationTest {
         assertTrue(layout.visibleCells(0, 1600).isEmpty())
         assertTrue(layout.visibleCells(720, 0).isEmpty())
     }
+
+    /** Vérifie la couverture des bords et la cible à 100 % pour plusieurs tailles de tuiles et orientations. */
 
     @Test fun gridExtendsToRightAndBottomInPortraitAndLandscape() {
         for (tileWidth in listOf(96f, 168f, 192f, 288f, 384f)) {
@@ -107,6 +135,8 @@ class TilePopulationTest {
         }
     }
 
+    /** Vérifie les limites du minimum configurable et son plafonnement par la capacité réelle. */
+
     @Test fun customMinimumIsCappedByAvailableCells() {
         assertEquals(5, TilePopulation.countForBattery(200, 0, 100, 5))
         assertEquals(3, TilePopulation.countForBattery(3, 0, 100, 5))
@@ -116,6 +146,11 @@ class TilePopulationTest {
             assertThrows(IllegalArgumentException::class.java) { WallpaperConfig(minimumTiles = minimum) }
         }
     }
+
+    /**
+     * Le passage en charge ajuste immédiatement le nombre et conserve les positions déjà allumées lors d’un
+     * ajout.
+     */
 
     @Test fun chargingSettlesCountWithoutMovingExistingTiles() {
         val scene = TilePopulation(80, 10, 0L, Random(8))
@@ -129,6 +164,8 @@ class TilePopulationTest {
         scene.settleTarget()
         assertTrue(scene.lights(0L).isEmpty())
     }
+
+    /** Le minimum nul autorise une scène vide qui cesse de rendre, puis peut être rallumée. */
 
     @Test fun disabledMinimumCanTurnOffAllTilesAndResumeLater() {
         val scene = TilePopulation(80, 10, 0L, Random(8))

@@ -5,6 +5,7 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class TileEffectsTest {
+    /** Vérifie les bornes et la progression continue du profil FADE. */
     @Test fun fadeIsSmoothMonotonicAndHasExactEndpoints() {
         assertEquals(0f, TileEffect.FADE.opacity(0f), 0f)
         assertEquals(1f, TileEffect.FADE.opacity(1f), 0f)
@@ -18,6 +19,8 @@ class TileEffectsTest {
         }
     }
 
+    /** Préserve le choix fluorescent par défaut, y compris pour une valeur persistée inconnue. */
+
     @Test fun defaultsAndUnknownStoredEffectsPreserveFlicker() {
         assertEquals(TileEffects(), WallpaperConfig().effects)
         assertEquals(TileEffect.FLICKER, TileEffect.fromStored(""))
@@ -28,6 +31,8 @@ class TileEffectsTest {
             assertEquals(TilePopulation.ignition(progress), TileEffect.FLICKER.opacity(progress), 0f)
         }
     }
+
+    /** Vérifie les quatre couples d’effets, avec quantification de l’opacité comme dans le rendu Android. */
 
     @Test fun allFourCombinationsPreserveVisibleCountAndDistinctPositions() {
         for (appearance in TileEffect.entries) for (disappearance in TileEffect.entries) {
@@ -46,6 +51,8 @@ class TileEffectsTest {
             assertTrue(animated)
         }
     }
+
+    /** Changer les réglages ne doit pas modifier le profil d’un relais déjà commencé. */
 
     @Test fun effectChangeDoesNotAlterTransitionAlreadyInProgress() {
         val reference = TilePopulation(80, 10, 0L, Random(13))
@@ -67,6 +74,8 @@ class TileEffectsTest {
             assertEquals(reference.lights(now), changed.lights(now))
         }
     }
+
+    /** Vérifie que les profils d’apparition et de disparition sont indépendants. */
 
     @Test fun choosingOneDirectionDoesNotChangeTheOther() {
         val original = TileEffects()

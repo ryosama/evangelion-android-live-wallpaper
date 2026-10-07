@@ -6,6 +6,7 @@ import org.junit.Test
 import kotlin.math.sqrt
 
 class MosaicTest {
+    /** Vérifie les frontières exactes et les fractions de batterie sans arrondi préalable. */
     @Test fun batteryThresholdsIncludeTheirLowerBoundary() {
         val cases = listOf(
             1000 to BatteryBand.GREEN, 500 to BatteryBand.GREEN,
@@ -18,11 +19,18 @@ class MosaicTest {
         assertEquals(BatteryBand.YELLOW, BatteryBand.fromLevel(1, 3))
     }
 
+    /** Une mesure Android impossible doit renvoyer null, afin de préserver le dernier rendu connu. */
+
     @Test fun invalidBatteryReadingsDoNotSelectAColor() {
         for ((level, scale) in listOf(-1 to 100, 50 to -1, 0 to 0, 101 to 100)) {
             assertNull(BatteryBand.fromLevel(level, scale))
         }
     }
+
+    /**
+     * Vérifie l’écart entre faces colorées verticalement et en diagonale, indépendamment de la densité
+     * Android.
+     */
 
     @Test fun gapIsThreePhysicalPixelsAtEveryDensityAndInEveryDirection() {
         for (density in listOf(1f, 1.5f, 2f, 3f, 4f)) {
@@ -34,6 +42,7 @@ class MosaicTest {
             assertEquals(0f, layout.columnOffset(2), 0f)
         }
     }
+    /** Vérifie que BatteryBand respecte les seuils personnalisés de WallpaperConfig. */
     @Test fun customThresholdsDriveAllFourBands() {
         val thresholds = BatteryThresholds(10, 40, 80)
         val cases = listOf(
@@ -46,6 +55,8 @@ class MosaicTest {
             assertEquals(expected, BatteryBand.fromLevel(level, 1000, thresholds))
         }
     }
+
+    /** Vérifie le contrat des seuils : plages non vides, ordonnées et dans 0..100. */
 
     @Test fun crossedOrEmptyRangesAreRejected() {
         for ((bad, ok, perfect) in listOf(
@@ -61,6 +72,8 @@ class MosaicTest {
         assertEquals(BatteryBand.YELLOW, BatteryBand.fromLevel(99, 100, narrow))
         assertEquals(BatteryBand.GREEN, BatteryBand.fromLevel(100, 100, narrow))
     }
+
+    /** Vérifie les textes initiaux et la restauration d’un modèle neuf après édition. */
 
     @Test fun defaultStylesAndResetKeepOriginalTexts() {
         val original = WallpaperConfig()

@@ -4,6 +4,10 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ChargingPulseTest {
+    /**
+     * Vérifie les extrêmes, la monotonie de chaque demi-cycle et la répétition du pulse pour plusieurs
+     * réglages.
+     */
     @Test fun pulseUsesConfiguredPeriodAndMinimumOpacity() {
         for (period in listOf(200, 1000, 5000)) {
             for (opacity in listOf(0, 20, 40, 100)) {
@@ -22,6 +26,8 @@ class ChargingPulseTest {
         assertEquals(0xFF0088FF.toInt(), ChargingAnimation().color)
     }
 
+    /** Empêche les modèles de charge de recevoir des durées ou opacités incompatibles avec les curseurs. */
+
     @Test fun invalidPulseSettingsAreRejected() {
         for (period in listOf(0, 199, 250, 5001)) {
             assertThrows(IllegalArgumentException::class.java) { ChargingAnimation(pulseMillis = period) }
@@ -30,6 +36,8 @@ class ChargingPulseTest {
             assertThrows(IllegalArgumentException::class.java) { ChargingAnimation(minimumOpacity = opacity) }
         }
     }
+
+    /** Vérifie le nombre rempli à mi-parcours, durant le maintien et exactement au retour du cycle. */
 
     @Test fun fillThenHoldThenResetWithCustomDurations() {
         for (settings in listOf(ChargingAnimation(), ChargingAnimation(2, 3), ChargingAnimation(30, 60))) {
@@ -45,12 +53,16 @@ class ChargingPulseTest {
         }
     }
 
+    /** Le maintien nul redémarre sans pause ; les durées hors bornes sont rejetées à la construction. */
+
     @Test fun zeroHoldRestartsImmediatelyAndDurationsAreValidated() {
         assertEquals(0, ChargingPulse.filledCount(1000, 10, ChargingAnimation(1, 0)))
         for ((fill, hold) in listOf(0 to 5, 31 to 5, 4 to -1, 4 to 61)) {
             assertThrows(IllegalArgumentException::class.java) { ChargingAnimation(fill, hold) }
         }
     }
+
+    /** Vérifie que le balayage ignore les cellules éteintes et départage une même hauteur de gauche à droite. */
 
     @Test fun sweepOrdersOnlyLitCellsFromBottomToTop() {
         val cells = listOf(MosaicLayout.Cell(0f, 0f), MosaicLayout.Cell(0f, 100f),

@@ -10,7 +10,9 @@ import com.google.android.material.slider.RangeSlider
 
 /** Une seule piste à quatre couleurs, avec les trois poignées accessibles de Material. */
 class BatteryRangeSlider(context: Context) : RangeSlider(context) {
+    // Pinceau réutilisé pour les quatre segments ; les poignées restent dessinées par Material.
     private val segmentPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    // Couleurs de gauche à droite : Critique, Mauvais, OK, Parfait. MainActivity les actualise lors du choix d’une couleur.
     var segmentColors: List<Int> = WallpaperConfig.DEFAULT_STYLES.reversed().map { it.color }
         set(value) { field = value; invalidate() }
 
@@ -23,7 +25,12 @@ class BatteryRangeSlider(context: Context) : RangeSlider(context) {
         isTickVisible = false
     }
 
+    /**
+     * Dessine les segments selon les trois seuils, puis laisse Material dessiner les poignées et gérer les
+     * interactions accessibles.
+     */
     override fun onDraw(canvas: Canvas) {
+        // Bornes de la piste : 0, les trois seuils sélectionnés, puis 100.
         val boundaries = listOf(valueFrom) + values + valueTo
         if (boundaries.size == 5 && segmentColors.size == 4) {
             // Avec LABEL_FLOATING, la piste Material est centrée dans la hauteur mesurée.

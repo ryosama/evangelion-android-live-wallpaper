@@ -144,6 +144,10 @@ adb -d shell am start -n org.evawallpaper/.MainActivity
 
 ## Development / Développement
 
+**EN** — See the [code architecture and maintenance guide (French)](docs/architecture.md) for the data flow between files, units and lifecycle rules. Functions and important state variables are documented in the source.
+
+**FR** — Consulte le [guide d’architecture et de maintenance](docs/architecture.md) pour suivre les échanges entre fichiers, les unités et le cycle de vie. Les fonctions et variables d’état importantes sont commentées dans les sources.
+
 **EN** — Main source files:
 
 **FR** — Principaux fichiers sources :

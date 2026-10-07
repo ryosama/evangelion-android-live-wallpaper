@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Affiche les versions, la disponibilité KVM, le disque et les appareils ADB ; ne compile ni n’installe l’application.
 set -eu
 source "$(dirname "$0")/env.sh"
 java -version

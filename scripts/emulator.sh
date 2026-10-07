@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Prépare puis lance un AVD Android 12 si l’accélération matérielle est disponible ; les arguments sont transmis à emulator.
 set -euo pipefail
 source "$(dirname "$0")/env.sh"
 if ! emulator -accel-check; then

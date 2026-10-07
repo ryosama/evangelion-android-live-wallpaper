@@ -31,14 +31,25 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.radiobutton.MaterialRadioButton
 import java.util.Locale
 
+/** Éditeur des réglages : possède un brouillon et ses aperçus, mais ne pilote pas directement le moteur. */
 class MainActivity : AppCompatActivity() {
+    // Passerelle de persistance ; ses écritures avertissent le service par SharedPreferences.
     private lateinit var store: ConfigStore
+    // Configuration en cours d’édition ; n’affecte pas le fond avant Appliquer ou Prévisualiser.
     private lateinit var draft: WallpaperConfig
+    // Libellé des plages, recalculé quand les trois seuils changent.
     private lateinit var ranges: TextView
+    // Vues des quatre aperçus dans l’ordre de BatteryBand.
     private val previews = mutableListOf<ImageView>()
+    // Bitmaps possédés par l’activité ; leur durée de vie suit les aperçus, pas le service.
     private val previewBitmaps = mutableListOf<Bitmap>()
+    // Noms visibles des états, dans le même ordre que BatteryBand et WallpaperConfig.styles.
     private val names = listOf("Parfait", "OK", "Mauvais", "Critique")
 
+    /**
+     * Restaure le brouillon après recréation, sinon lit ConfigStore, puis construit l’interface entièrement
+     * en Kotlin.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         store = ConfigStore(this)
@@ -48,13 +59,16 @@ class MainActivity : AppCompatActivity() {
         showConfiguration()
     }
 
+    /** Sauvegarde le brouillon dans le Bundle Android, sans appliquer ces changements au fond d’écran. */
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString("draft", ConfigStore.encode(draft))
         super.onSaveInstanceState(outState)
     }
 
+    /** Convertit une dimension d’interface en dp vers des pixels selon la densité de l’écran. */
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
+    /** Fabrique un libellé cohérent avec le thème sombre ; size est exprimé en sp via TextView.textSize. */
     private fun label(value: String, size: Float = 16f) = TextView(this).apply {
         text = value
         textSize = size
@@ -62,14 +76,20 @@ class MainActivity : AppCompatActivity() {
         setPadding(0, dp(8), 0, dp(8))
     }
 
+    /** Fabrique un bouton Material et relie son clic à l’action fournie par la section appelante. */
     private fun button(value: String, action: () -> Unit) = MaterialButton(this).apply {
         text = value
         isAllCaps = false
         setOnClickListener { action() }
     }
 
+    /**
+     * Reconstruit les aperçus et les sections depuis draft. Les contrôles modifient seulement le brouillon
+     * ; Appliquer et Prévisualiser écrivent dans ConfigStore, observé par le service.
+     */
     private fun showConfiguration() {
         previews.clear()
+        // Anciennes images à recycler seulement après remplacement de la hiérarchie de vues.
         val previousBitmaps = previewBitmaps.toList()
         previewBitmaps.clear()
         val scroll = ScrollView(this).apply { setBackgroundColor(Color.rgb(16, 16, 20)) }
@@ -110,6 +130,7 @@ class MainActivity : AppCompatActivity() {
             addView(label("0 %", 12f), LinearLayout.LayoutParams(0, -2, 1f))
             addView(label("100 %", 12f).apply { gravity = Gravity.END }, LinearLayout.LayoutParams(0, -2, 1f))
         })
+        // Barre des trois seuils ; les segments sont ordonnés de Critique à Parfait.
         val slider = BatteryRangeSlider(this).apply {
             segmentColors = draft.styles.reversed().map { it.color }
             valueFrom = 0f
@@ -131,6 +152,7 @@ class MainActivity : AppCompatActivity() {
                 val ok = values[1].coerceIn(bad + 1, 99)
                 val perfect = values[2].coerceIn(ok + 1, 100)
                 draft = draft.copy(thresholds = BatteryThresholds(bad, ok, perfect))
+                // Valeurs remises dans les bornes pour interdire les plages vides et les croisements.
                 val corrected = listOf(bad.toFloat(), ok.toFloat(), perfect.toFloat())
                 if (control.values != corrected) control.values = corrected
                 updateRanges()
@@ -180,11 +202,23 @@ class MainActivity : AppCompatActivity() {
                 filters = arrayOf(InputFilter.LengthFilter(24))
                 setText(draft.styles[index].text)
                 addTextChangedListener(object : TextWatcher {
+                    /**
+                     * Callback TextWatcher volontairement vide ; le traitement est réalisé dans l’autre
+                     * callback de cet observateur.
+                     */
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                    /**
+                     * Met à jour le texte du style dans draft et rafraîchit immédiatement son aperçu, sans
+                     * sauvegarde persistante.
+                     */
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                         updateStyle(index, draft.styles[index].copy(text = s.toString()))
                         updatePreview(index)
                     }
+                    /**
+                     * Callback TextWatcher volontairement vide ; le traitement est réalisé dans l’autre
+                     * callback de cet observateur.
+                     */
                     override fun afterTextChanged(s: Editable?) = Unit
                 })
             }
@@ -192,6 +226,7 @@ class MainActivity : AppCompatActivity() {
         }
         val chargeSection = section(content, "Effet de charge")
         chargeSection.addView(label("Balayage du bas vers le haut et pulsation des tuiles allumées.", 14f))
+        // Bouton représentant la couleur de charge ; partage le sélecteur avec les états.
         val chargeColorButton = button(getString(R.string.color_button, hex(draft.charging.color))) {}
         styleColorButton(chargeColorButton, draft.charging.color)
         chargeColorButton.setOnClickListener {
@@ -202,6 +237,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
         chargeSection.addView(chargeColorButton)
+        /**
+         * Ajoute un curseur de charge. Les bornes et step utilisent l’unité stockée (secondes,
+         * millisecondes ou pourcentage) ; format gère uniquement l’affichage et changed met à jour draft.
+         */
         fun chargeControl(title: String, initial: Int, minimum: Int, maximum: Int,
                           step: Int = 1, format: (Int) -> String = { "$it s" }, changed: (Int) -> Unit) {
             val caption = label(getString(R.string.setting_value, title, format(initial)))
@@ -261,6 +300,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    /** Ajoute un panneau titré au conteneur principal et renvoie le panneau où placer les réglages associés. */
     private fun section(parent: LinearLayout, title: String): LinearLayout {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -275,8 +315,13 @@ class MainActivity : AppCompatActivity() {
         return panel
     }
 
+    /**
+     * Affiche la couleur choisie sur le bouton et sélectionne le texte noir/blanc le plus contrasté ; ne
+     * modifie pas les réglages.
+     */
     private fun styleColorButton(button: MaterialButton, color: Int) {
         button.backgroundTintList = ColorStateList.valueOf(color)
+        // Couleur noire ou blanche donnant le meilleur contraste sur le bouton.
         val foreground = if (ColorUtils.calculateContrast(Color.WHITE, color) >=
             ColorUtils.calculateContrast(Color.BLACK, color)) Color.WHITE else Color.BLACK
         button.setTextColor(foreground)
@@ -285,6 +330,10 @@ class MainActivity : AppCompatActivity() {
         button.rippleColor = ColorStateList.valueOf(ColorUtils.setAlphaComponent(foreground, 48))
     }
 
+    /**
+     * Construit les deux choix d’effet et transmet la sélection à changed. Le libellé de fondu dépend du
+     * sens apparition/disparition.
+     */
     private fun effectSelector(title: Int, fadeLabel: Int, selected: TileEffect, changed: (TileEffect) -> Unit): LinearLayout {
         val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         column.addView(label(getString(title), 18f))
@@ -309,15 +358,24 @@ class MainActivity : AppCompatActivity() {
         return column
     }
 
+    /** Actualise les plages de batterie affichées à partir des seuils du brouillon. */
     private fun updateRanges() {
         val t = draft.thresholds
         ranges.text = getString(R.string.battery_ranges, t.bad, t.ok, t.perfect)
     }
 
+    /**
+     * Remplace immuablement un style du brouillon ; index suit l’ordre de BatteryBand. La sauvegarde reste
+     * une action explicite.
+     */
     private fun updateStyle(index: Int, value: TileStyle) {
         draft = draft.copy(styles = draft.styles.toMutableList().apply { set(index, value) })
     }
 
+    /**
+     * Régénère l’aperçu via TileRenderer, remplace son image puis recycle le bitmap précédent possédé par
+     * l’activité.
+     */
     private fun updatePreview(index: Int) {
         val bitmap = TileRenderer.render(resources, BatteryBand.entries[index], draft.styles[index])
         previews[index].setImageBitmap(bitmap)
@@ -325,8 +383,13 @@ class MainActivity : AppCompatActivity() {
         previewBitmaps[index] = bitmap
     }
 
+    /** Formate une couleur ARGB en #RRGGBB ; l’alpha est volontairement exclu du sélecteur de couleur. */
     private fun hex(color: Int) = String.format(Locale.ROOT, "#%06X", color and 0xFFFFFF)
 
+    /**
+     * Ouvre le sélecteur partagé par les états et la charge. Synchronise RGB et hexadécimal, puis appelle
+     * changed uniquement après validation de Choisir.
+     */
     private fun chooseColor(title: String, initialColor: Int, changed: (Int) -> Unit) {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -340,13 +403,16 @@ class MainActivity : AppCompatActivity() {
             setText(hex(initialColor))
         }
         panel.addView(input)
+        // Échantillon visuel temporaire ; ne vaut pas validation du choix.
         val swatch = TextView(this).apply {
             text = " "
             setBackgroundColor(initialColor)
         }
         panel.addView(swatch, LinearLayout.LayoutParams(-1, dp(32)))
         // Un sélecteur RGB permet le choix visuel, sans connaître un code couleur.
+        // Composantes RGB courantes, chacune entre 0 et 255 ; synchronisées avec le champ hexadécimal.
         val channels = intArrayOf(Color.red(initialColor), Color.green(initialColor), Color.blue(initialColor))
+        // Références des trois curseurs pour les actualiser lors d’une saisie hexadécimale.
         val colorBars = mutableListOf<android.widget.SeekBar>()
         listOf("Rouge", "Vert", "Bleu").forEachIndexed { channel, name ->
             panel.addView(TextView(this).apply { text = name })
@@ -356,6 +422,10 @@ class MainActivity : AppCompatActivity() {
                 progress = channels[channel]
                 contentDescription = name
                 setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+                    /**
+                     * Répercute un déplacement utilisateur du canal RGB dans le champ hexadécimal et
+                     * l’échantillon. Ignore les mises à jour programmatiques pour éviter une boucle.
+                     */
                     override fun onProgressChanged(bar: android.widget.SeekBar, value: Int, fromUser: Boolean) {
                         if (!fromUser) return
                         channels[channel] = value
@@ -363,14 +433,31 @@ class MainActivity : AppCompatActivity() {
                         input.setText(hex(color))
                         swatch.setBackgroundColor(color)
                     }
+                    /**
+                     * Callback requis par SeekBar ; aucun traitement au début du geste, les changements
+                     * sont gérés par onProgressChanged.
+                     */
                     override fun onStartTrackingTouch(bar: android.widget.SeekBar) = Unit
+                    /** Callback requis par SeekBar ; la couleur n’est validée que par le bouton Choisir. */
                     override fun onStopTrackingTouch(bar: android.widget.SeekBar) = Unit
                 })
             }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(48)))
         }
         input.addTextChangedListener(object : TextWatcher {
+            /**
+             * Callback TextWatcher volontairement vide ; le traitement est réalisé dans l’autre callback de
+             * cet observateur.
+             */
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            /**
+             * Callback TextWatcher volontairement vide ; le traitement est réalisé dans l’autre callback de
+             * cet observateur.
+             */
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            /**
+             * Valide la saisie hexadécimale avant de synchroniser l’échantillon et les curseurs RGB ; ne
+             * modifie pas encore draft.
+             */
             override fun afterTextChanged(s: Editable?) {
                 val value = s.toString().trim()
                 if (!value.matches(Regex("#[0-9a-fA-F]{6}"))) return
@@ -398,6 +485,10 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
+    /**
+     * Détache les images puis recycle les bitmaps d’aperçu possédés par l’activité ; ceux du service
+     * restent indépendants.
+     */
     override fun onDestroy() {
         previews.forEach { it.setImageDrawable(null) }
         previewBitmaps.forEach { it.recycle() }
